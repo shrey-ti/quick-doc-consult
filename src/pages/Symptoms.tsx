@@ -22,6 +22,13 @@ interface LocationState {
   initialSymptom?: string;
 }
 
+interface PatientInfo {
+  age: string;
+  gender: string;
+  height: string;
+  weight: string;
+}
+
 const commonSymptoms = [
   "Headache", "Fever", "Cough", "Sore Throat", 
   "Back Pain", "Stomach Pain", "Fatigue", "Dizziness"
@@ -36,118 +43,129 @@ const Symptoms = () => {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [symptoms, setSymptoms] = useState<string[]>([]);
-
-  // Common symptoms database for suggestions
-  const symptomDatabase = [
-    "Headache", "Fever", "Cough", "Sore Throat", "Runny Nose",
-    "Fatigue", "Nausea", "Dizziness", "Back Pain", "Chest Pain", 
-    "Shortness of Breath", "Joint Pain", "Muscle Ache", "Rash",
-    "Abdominal Pain", "Diarrhea", "Loss of Appetite", "Insomnia"
-  ];
-
-  // Mock follow-up questions based on symptoms
-  const followUpQuestions = {
-    "headache": [
-      "How long have you had the headache?",
-      "Is it on one side or both sides?",
-      "Rate your pain from 1-10",
-      "Do you have any other symptoms like nausea or sensitivity to light?",
-      "Have you taken any pain medication?",
-    ],
-    "fever": [
-      "What's your temperature?",
-      "Do you have any other symptoms?",
-      "When did it start?",
-      "Are you experiencing any chills or sweating?",
-      "Have you taken any fever medication?",
-    ],
-    "cough": [
-      "Is it a dry or wet cough?",
-      "How long have you been coughing?",
-      "Do you have any mucus?",
-      "Is the cough worse at night?",
-      "Do you have any chest pain when coughing?",
-    ],
-    "sore throat": [
-      "How long have you had the sore throat?",
-      "Is it painful to swallow?",
-      "Do you have any white patches in your throat?",
-      "Are you experiencing any fever?",
-      "Have you tried any throat lozenges?",
-    ],
-    "back pain": [
-      "Where exactly is the pain located?",
-      "How long have you been experiencing it?",
-      "Did you do any heavy lifting recently?",
-      "Does the pain radiate to other areas?",
-      "What makes the pain better or worse?",
-    ],
-    "dizziness": [
-      "How long have you been feeling dizzy?",
-      "Is it constant or does it come and go?",
-      "Do you feel like the room is spinning?",
-      "Have you had any falls?",
-      "Are you experiencing any other symptoms?",
-    ],
-  };
+  
+  // Add a new state to track the current conversation flow
+  const [currentFlow, setCurrentFlow] = useState<string | null>(null);
+  // Add a state to track the current question index
+  const [questionIndex, setQuestionIndex] = useState(0);
 
   // Mock conversation flows for common scenarios
   const conversationFlows = {
     "severe headache": {
       initial: "I understand you're experiencing a severe headache. Let me ask you a few questions to better understand your condition.",
       followUps: [
+        "First, could you tell me your age?",
+        "What is your gender?",
+        "What is your height and weight?",
         "How long have you had the headache?",
         "Is it on one side or both sides?",
         "Rate your pain from 1-10",
         "Do you have any other symptoms like nausea or sensitivity to light?",
         "Have you taken any pain medication?",
+        "Do you have any pre-existing medical conditions?",
+        "Are you currently taking any medications?",
       ],
-      final: "Based on your symptoms, I recommend consulting with a neurologist or general physician. Would you like to proceed with booking a consultation?"
+      final: "Based on your symptoms and information, I recommend consulting with a neurologist or general physician. Would you like to proceed with booking a consultation?"
     },
     "fever and body ache": {
       initial: "I see you're experiencing fever and body ache. Let's gather more information about your symptoms.",
       followUps: [
+        "First, could you tell me your age?",
+        "What is your gender?",
+        "What is your height and weight?",
         "What's your temperature?",
         "When did the fever start?",
         "Are you experiencing any other symptoms?",
         "Have you taken any fever medication?",
         "Do you have any respiratory symptoms?",
+        "Do you have any pre-existing medical conditions?",
+        "Are you currently taking any medications?",
       ],
-      final: "Given your symptoms, I recommend seeing a general physician. Would you like to book a consultation?"
+      final: "Given your symptoms and information, I recommend seeing a general physician. Would you like to book a consultation?"
     },
     "persistent cough with sore throat": {
       initial: "I understand you have a persistent cough and sore throat. Let me ask you some questions to better assess your condition.",
       followUps: [
+        "First, could you tell me your age?",
+        "What is your gender?",
+        "What is your height and weight?",
         "How long have you had these symptoms?",
         "Is it a dry or wet cough?",
         "Is it painful to swallow?",
         "Do you have any fever?",
         "Have you tried any over-the-counter medications?",
+        "Do you have any pre-existing medical conditions?",
+        "Are you currently taking any medications?",
       ],
-      final: "Based on your symptoms, I recommend consulting with an ENT specialist or general physician. Would you like to proceed with booking?"
+      final: "Based on your symptoms and information, I recommend consulting with an ENT specialist or general physician. Would you like to proceed with booking?"
     },
     "back pain": {
       initial: "I see you're experiencing back pain. Let's understand more about your condition.",
       followUps: [
+        "First, could you tell me your age?",
+        "What is your gender?",
+        "What is your height and weight?",
         "Where exactly is the pain located?",
         "How long have you been experiencing it?",
         "Did you do any heavy lifting recently?",
         "Does the pain radiate to other areas?",
         "What makes the pain better or worse?",
+        "Do you have any pre-existing medical conditions?",
+        "Are you currently taking any medications?",
       ],
-      final: "Given your symptoms, I recommend seeing an orthopedic specialist. Would you like to book a consultation?"
+      final: "Given your symptoms and information, I recommend seeing an orthopedic specialist. Would you like to book a consultation?"
     },
     "dizzy and nauseous": {
       initial: "I understand you're feeling dizzy and nauseous. Let me ask you some questions to better understand your condition.",
       followUps: [
+        "First, could you tell me your age?",
+        "What is your gender?",
+        "What is your height and weight?",
         "How long have you been feeling this way?",
         "Is the dizziness constant or does it come and go?",
         "Have you had any falls?",
         "Are you experiencing any other symptoms?",
         "Have you eaten anything unusual recently?",
+        "Do you have any pre-existing medical conditions?",
+        "Are you currently taking any medications?",
       ],
-      final: "Based on your symptoms, I recommend consulting with a general physician. Would you like to proceed with booking a consultation?"
+      final: "Based on your symptoms and information, I recommend consulting with a general physician. Would you like to proceed with booking a consultation?"
+    },
+    // Add a specific flow for just "headache"
+    "headache": {
+      initial: "I see you're experiencing a headache. Let me ask you some questions to better understand your condition.",
+      followUps: [
+        "First, could you tell me your age?",
+        "What is your gender?",
+        "What is your height and weight?",
+        "How long have you had the headache?",
+        "Is it on one side or both sides?",
+        "Rate your pain from 1-10",
+        "Do you have any other symptoms like nausea or sensitivity to light?",
+        "Have you taken any pain medication?",
+        "Do you have any pre-existing medical conditions?",
+        "Are you currently taking any medications?",
+      ],
+      final: "Based on your symptoms and information, I recommend consulting with a neurologist or general physician. Would you like to proceed with booking a consultation?"
     }
+  };
+
+  // Function to check for matching flow based on user input
+  const findMatchingFlow = (userInput: string): string | null => {
+    const normalizedInput = userInput.toLowerCase();
+    
+    for (const [key, flow] of Object.entries(conversationFlows)) {
+      if (normalizedInput.includes(key)) {
+        return key;
+      }
+    }
+    
+    // Special case for just "headache" without "severe"
+    if (normalizedInput.includes("headache") && !normalizedInput.includes("severe headache")) {
+      return "headache";
+    }
+    
+    return null;
   };
 
   // Scroll to bottom of messages
@@ -193,9 +211,16 @@ const Symptoms = () => {
     setIsTyping(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Add symptoms to the list
-    if (!symptoms.includes(message.toLowerCase())) {
+    // Add symptoms to the list if this is the first message
+    if (messages.length <= 1) {
       setSymptoms(prev => [...prev, message.toLowerCase()]);
+      
+      // Check if the initial message matches any flow
+      const matchedFlow = findMatchingFlow(message);
+      if (matchedFlow) {
+        setCurrentFlow(matchedFlow);
+        setQuestionIndex(0);
+      }
     }
 
     // Generate bot response
@@ -228,46 +253,76 @@ const Symptoms = () => {
       )
     );
 
+    // Extract patient information from messages
+    const patientInfo = messages.reduce((acc, message) => {
+      if (message.sender === "user") {
+        const text = message.text.toLowerCase();
+        if (text.includes("years old") || text.includes("age")) {
+          acc.age = text.match(/\d+/)?.[0] || "25";
+        } else if (text.includes("male") || text.includes("female")) {
+          acc.gender = text.includes("male") ? "Male" : "Female";
+        } else if (text.includes("height") || text.includes("weight")) {
+          const heightMatch = text.match(/(\d+)\s*(?:cm|ft|'|feet)/i);
+          const weightMatch = text.match(/(\d+)\s*(?:kg|lbs|pounds)/i);
+          if (heightMatch) acc.height = heightMatch[1];
+          if (weightMatch) acc.weight = weightMatch[1];
+        }
+      }
+      return acc;
+    }, { age: "25", gender: "Male", height: "170", weight: "70" } as PatientInfo);
+
+    // Create patient data structure
+    const patientData = {
+      symptoms: symptoms,
+      age: patientInfo.age,
+      gender: patientInfo.gender,
+      height: patientInfo.height,
+      weight: patientInfo.weight,
+      recommendedSpecialties: Array.from(recommendedSpecialties)
+    };
+
     navigate("/doctors", { 
-      state: { 
-        symptoms,
-        recommendedSpecialties: Array.from(recommendedSpecialties)
-      } 
+      state: { patientData } 
     });
   };
 
   const generateBotResponse = (symptom: string): string => {
-    // Check for specific conversation flows first
-    for (const [key, flow] of Object.entries(conversationFlows)) {
-      if (symptom.toLowerCase().includes(key)) {
-        const currentSymptom = symptom.toLowerCase();
-        const symptomCount = symptoms.length;
-        
-        if (symptomCount === 0) {
-          return flow.initial;
-        } else if (symptomCount <= flow.followUps.length) {
-          return flow.followUps[symptomCount - 1];
-        } else {
-          // After all follow-ups, redirect to doctors page
-          setTimeout(handleRedirectToDoctors, 1500);
-          return "Thank you for providing all the information. I'll connect you with the most suitable doctors for your condition.";
-        }
-      }
-    }
-
-    // Check if we have follow-up questions for this symptom
-    const questions = followUpQuestions[symptom as keyof typeof followUpQuestions];
-    if (questions && questions.length > 0) {
-      const questionIndex = Math.min(symptoms.length, questions.length - 1);
-      if (questionIndex >= questions.length - 1) {
+    // If we have an active flow, follow it regardless of user input
+    if (currentFlow && conversationFlows[currentFlow]) {
+      const flow = conversationFlows[currentFlow];
+      
+      // First response after detecting the flow
+      if (questionIndex === 0) {
+        setQuestionIndex(1); // Move to first question for next response
+        return flow.initial;
+      } 
+      // Follow-up questions
+      else if (questionIndex <= flow.followUps.length) {
+        const question = flow.followUps[questionIndex - 1];
+        setQuestionIndex(questionIndex + 1); // Advance to next question
+        return question;
+      } 
+      // Final response after all questions
+      else {
         // After all follow-ups, redirect to doctors page
         setTimeout(handleRedirectToDoctors, 1500);
-        return "Thank you for providing all the information. I'll connect you with the most suitable doctors for your condition.";
+        return flow.final;
       }
-      return questions[questionIndex];
+    }
+    
+    // If no active flow was found in the first message, use default behavior
+    // This case should mostly happen when messages.length <= 2
+    // Check if the first message matches any flow
+    if (messages.length <= 2) {
+      const matchedFlow = findMatchingFlow(symptom);
+      if (matchedFlow) {
+        setCurrentFlow(matchedFlow);
+        setQuestionIndex(1); // Set to 1 because we're returning the initial response now
+        return conversationFlows[matchedFlow].initial;
+      }
     }
 
-    // Default responses
+    // Default responses if no flow was matched
     if (symptoms.length >= 3) {
       // After collecting enough symptoms, redirect to doctors page
       setTimeout(handleRedirectToDoctors, 1500);
@@ -289,11 +344,6 @@ const Symptoms = () => {
     } else {
       toast.error("Please describe at least one symptom");
     }
-  };
-
-  // Get available common symptoms (exclude already selected ones)
-  const getAvailableCommonSymptoms = () => {
-    return commonSymptoms.filter(symptom => !symptoms.includes(symptom));
   };
 
   return (

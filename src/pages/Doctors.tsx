@@ -13,10 +13,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
 
 interface LocationState {
-  symptoms: string[];
-  recommendedSpecialties: string[];
+  patientData: PatientData;
 }
 
 interface Doctor {
@@ -33,13 +33,23 @@ interface Doctor {
   price: number;
 }
 
+interface PatientData {
+  symptoms: string[];
+  age: string;
+  gender: string;
+  height: string;
+  weight: string;
+  recommendedSpecialties: string[];
+}
+
 const Doctors = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { symptoms = [], recommendedSpecialties = [] } = (location.state as LocationState) || {};
-  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
-  const [filter, setFilter] = useState("all");
+  const { patientData } = (location.state as LocationState) || { patientData: null };
   
+  const [showAvailableOnly, setShowAvailableOnly] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+
   // Mock doctors data - in a real app this would come from an API based on symptoms
   const doctors: Doctor[] = [
     {
@@ -109,19 +119,25 @@ const Doctors = () => {
     }
   ];
 
+  // If no patient data, redirect to home
+  if (!patientData) {
+    navigate("/");
+    return null;
+  }
+
   // Filter doctors based on recommended specialties
   const filteredDoctors = doctors.filter(doctor => 
-    recommendedSpecialties.includes(doctor.specialty) &&
-    (filter === "all" || (filter === "available" && doctor.availableToday))
+    patientData.recommendedSpecialties.includes(doctor.specialty)
   );
 
-  const handleSelectDoctor = (doctor: Doctor) => {
+  const handleDoctorSelect = (doctor: Doctor) => {
     setSelectedDoctor(doctor);
-    toast.success(`Selected ${doctor.name}`);
-    // In a real app, we'd scroll to the next section or navigate
-    setTimeout(() => {
-      navigate("/booking", { state: { doctor, symptoms } });
-    }, 500);
+    navigate("/booking", { 
+      state: { 
+        doctor,
+        patientData
+      }
+    });
   };
 
   return (
@@ -151,157 +167,90 @@ const Doctors = () => {
               <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white">4</div>
             </div>
           </div>
-          
-          {/* Summary of symptoms */}
-          <div className="mb-6 bg-blue-50 rounded-lg p-4">
-            <h2 className="text-lg font-semibold mb-2">Consultation for</h2>
-            <div className="flex flex-wrap gap-2 mb-2">
-              {symptoms.map((symptom, index) => (
-                <Badge 
-                  key={index} 
-                  variant="secondary" 
-                  className="px-3 py-1 text-base bg-white"
-                >
+
+          {/* Symptoms Summary */}
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+            <h2 className="text-sm font-medium text-gray-600 mb-2">Patient Information:</h2>
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <p className="text-sm text-gray-600">Age: <span className="font-medium text-gray-900">{patientData.age} years</span></p>
+                <p className="text-sm text-gray-600">Gender: <span className="font-medium text-gray-900">{patientData.gender}</span></p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-600">Height: <span className="font-medium text-gray-900">{patientData.height} cm</span></p>
+                <p className="text-sm text-gray-600">Weight: <span className="font-medium text-gray-900">{patientData.weight} kg</span></p>
+              </div>
+            </div>
+            <h2 className="text-sm font-medium text-gray-600 mb-2">Reported Symptoms:</h2>
+            <div className="flex flex-wrap gap-2">
+              {patientData.symptoms.map((symptom: string, index: number) => (
+                <Badge key={index} variant="secondary" className="capitalize">
                   {symptom}
                 </Badge>
               ))}
             </div>
-            <p className="text-sm text-gray-600">
-              Recommended Specialties: {recommendedSpecialties.join(", ")}
-            </p>
           </div>
-          
-          {/* Filter options */}
+
+          {/* Filter */}
           <div className="flex items-center justify-between mb-6">
-            <div className="flex space-x-2">
-              <Button 
-                variant={filter === "all" ? "default" : "outline"} 
-                onClick={() => setFilter("all")}
-                className="text-sm"
-              >
-                All Doctors
-              </Button>
-              <Button 
-                variant={filter === "available" ? "default" : "outline"} 
-                onClick={() => setFilter("available")}
-                className="text-sm"
-              >
-                Available Today
-              </Button>
+            <h2 className="text-lg font-semibold">Available Doctors</h2>
+            <div className="flex items-center space-x-2">
+              <label className="text-sm text-gray-600">Show available today only</label>
+              <Switch
+                checked={showAvailableOnly}
+                onCheckedChange={setShowAvailableOnly}
+              />
             </div>
-            <span className="text-sm text-gray-500">{filteredDoctors.length} doctors found</span>
           </div>
-          
-          {/* Doctor List */}
+
+          {/* Doctors List */}
           <div className="space-y-4">
-            {filteredDoctors.length > 0 ? (
-              filteredDoctors.map((doctor) => (
-                <Card
-                  key={doctor.id}
-                  className={`overflow-hidden transition-all cursor-pointer ${
-                    selectedDoctor?.id === doctor.id
-                      ? "ring-2 ring-primary"
-                      : "hover:shadow-md"
-                  }`}
-                  onClick={() => handleSelectDoctor(doctor)}
-                >
-                  <CardContent className="p-0">
-                    <div className="flex flex-col md:flex-row">
-                      {/* Doctor Photo */}
-                      <div className="w-full md:w-1/4 h-48 md:h-auto overflow-hidden">
-                        <img
-                          src={doctor.photo}
-                          alt={doctor.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      
-                      {/* Doctor Info */}
-                      <div className="p-4 md:p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-xl font-bold">{doctor.name}</h3>
-                            {doctor.availableToday && (
-                              <Badge className="bg-green-500 text-white">Available Today</Badge>
-                            )}
-                          </div>
-                          
-                          <p className="text-primary font-medium">{doctor.specialty}</p>
-                          
-                          <div className="flex items-center mt-2 mb-3">
-                            <div className="flex">
-                              {Array(5).fill(0).map((_, i) => (
-                                <svg 
-                                  key={i} 
-                                  className={`w-4 h-4 ${i < Math.floor(doctor.rating) ? "text-yellow-400" : "text-gray-300"}`} 
-                                  fill="currentColor" 
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                              ))}
-                            </div>
-                            <span className="ml-2 text-sm text-gray-600">{doctor.rating}</span>
-                            <span className="mx-2 text-gray-300">•</span>
-                            <span className="text-sm text-gray-600">{doctor.experience} experience</span>
-                          </div>
-                          
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            {doctor.consultationTypes.map((type) => (
-                              <Badge 
-                                key={type} 
-                                variant="outline" 
-                                className="text-xs"
-                              >
-                                {type}
-                              </Badge>
-                            ))}
-                          </div>
-                          
-                          <div className="flex flex-wrap gap-2">
-                            {doctor.expertise.slice(0, 3).map((expertise) => (
-                              <Badge 
-                                key={expertise} 
-                                variant="secondary" 
-                                className="text-xs bg-gray-100"
-                              >
-                                {expertise}
-                              </Badge>
-                            ))}
-                          </div>
+            {(showAvailableOnly ? filteredDoctors.filter(d => d.availableToday) : filteredDoctors).map((doctor) => (
+              <Card key={doctor.id} className="overflow-hidden">
+                <CardContent className="p-0">
+                  <div className="flex items-center p-4">
+                    <div className="h-16 w-16 rounded-full overflow-hidden mr-4">
+                      <img
+                        src={doctor.photo}
+                        alt={doctor.name}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold">{doctor.name}</h3>
+                      <p className="text-primary">{doctor.specialty}</p>
+                      <div className="flex items-center mt-1">
+                        <div className="flex">
+                          {Array(5).fill(0).map((_, i) => (
+                            <svg 
+                              key={i} 
+                              className={`w-4 h-4 ${i < Math.floor(doctor.rating) ? "text-yellow-400" : "text-gray-300"}`} 
+                              fill="currentColor" 
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118l-2.8-2.034c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
                         </div>
-                        
-                        <div className="mt-4 flex items-center justify-between">
-                          <div className="text-lg font-semibold">
-                            ${doctor.price} <span className="text-sm text-gray-500">/consultation</span>
-                          </div>
-                          <Button 
-                            variant="default"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleSelectDoctor(doctor);
-                            }}
-                          >
-                            Book Now
-                          </Button>
-                        </div>
+                        <span className="ml-1 text-sm text-gray-600">{doctor.rating}</span>
+                        <span className="mx-2 text-gray-300">•</span>
+                        <span className="text-sm text-gray-600">{doctor.consultations}+ consultations</span>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No doctors found matching your criteria.</p>
-                <Button 
-                  variant="outline" 
-                  className="mt-4"
-                  onClick={() => setFilter("all")}
-                >
-                  Show All Doctors
-                </Button>
-              </div>
-            )}
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-primary">${doctor.price}</p>
+                      <p className="text-sm text-gray-500">per consultation</p>
+                      <Button 
+                        className="mt-2"
+                        onClick={() => handleDoctorSelect(doctor)}
+                      >
+                        Book Now
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </main>
