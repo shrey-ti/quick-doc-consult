@@ -215,17 +215,30 @@ const DoctorRegistration = () => {
     setIsSubmitting(true);
     
     try {
-      // Simulate API call to register doctor
-      console.log("Doctor registration data:", data);
-      console.log("Photo:", selectedPhoto);
+      // Get existing doctors from localStorage
+      const existingDoctors = JSON.parse(localStorage.getItem("doctors") || "[]");
+      console.log("Existing doctors:", existingDoctors); // Debug log
       
-      // In a real app, you would send this data to your backend
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Add new doctor to the array
+      const newDoctor = {
+        ...data,
+        id: Date.now(), // Simple way to generate unique ID
+        registrationDate: new Date().toISOString()
+      };
+      console.log("New doctor data:", newDoctor); // Debug log
       
-      toast.success("Registration submitted successfully! We'll review your application and get back to you.");
+      // Save updated doctors array
+      const updatedDoctors = [...existingDoctors, newDoctor];
+      localStorage.setItem("doctors", JSON.stringify(updatedDoctors));
+      console.log("Updated doctors array:", updatedDoctors); // Debug log
       
-      // Redirect to a confirmation page
-      navigate("/");
+      // Store current doctor's mobile for immediate login
+      localStorage.setItem("currentDoctor", data.phone);
+      
+      toast.success("Registration successful! Redirecting to dashboard...");
+      
+      // Redirect to dashboard
+      navigate("/doctor/dashboard");
     } catch (error) {
       toast.error("Failed to submit registration. Please try again.");
       console.error(error);
