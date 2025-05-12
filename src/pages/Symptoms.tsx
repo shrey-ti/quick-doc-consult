@@ -20,6 +20,7 @@ interface Message {
 // Type for our location state
 interface LocationState {
   initialSymptom?: string;
+  mobileNumber: string;
 }
 
 interface PatientInfo {
@@ -37,7 +38,7 @@ const commonSymptoms = [
 const Symptoms = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { initialSymptom } = (location.state as LocationState) || {};
+  const { initialSymptom, mobileNumber } = (location.state as LocationState) || {};
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
@@ -278,7 +279,8 @@ const Symptoms = () => {
       gender: patientInfo.gender,
       height: patientInfo.height,
       weight: patientInfo.weight,
-      recommendedSpecialties: Array.from(recommendedSpecialties)
+      recommendedSpecialties: Array.from(recommendedSpecialties),
+      mobileNumber // Add mobile number to patient data
     };
 
     navigate("/doctors", { 
@@ -345,6 +347,12 @@ const Symptoms = () => {
       toast.error("Please describe at least one symptom");
     }
   };
+
+  // If no mobile number, redirect to home
+  if (!mobileNumber) {
+    navigate("/");
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">

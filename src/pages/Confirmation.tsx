@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Video, Phone, MessageCircle, Calendar, Check } from "lucide-react";
+import { addConsultationToHistory } from "@/types/consultation";
 
 const Confirmation = () => {
   const location = useLocation();
@@ -26,13 +26,28 @@ const Confirmation = () => {
       // Generate a session ID and store in localStorage to retrieve consultation later
       const sessionId = Math.random().toString(36).substring(2, 15);
       localStorage.setItem("mediconsult_session_id", sessionId);
-      localStorage.setItem("mediconsult_last_booking", JSON.stringify({
-        doctor: booking.doctor.name,
-        type: booking.consultationType,
-        time: booking.timeSlot,
+      
+      // Store the consultation in history
+      addConsultationToHistory({
+        id: sessionId,
+        mobileNumber: booking.patientData.mobileNumber,
         date: booking.date,
-        sessionId
-      }));
+        doctor: {
+          name: booking.doctor.name,
+          specialty: booking.doctor.specialty,
+          photo: booking.doctor.photo
+        },
+        consultationType: booking.consultationType,
+        timeSlot: booking.timeSlot,
+        symptoms: booking.patientData.symptoms,
+        patientData: {
+          age: booking.patientData.age,
+          gender: booking.patientData.gender,
+          height: booking.patientData.height,
+          weight: booking.patientData.weight
+        },
+        status: "upcoming"
+      });
     }
   }, [booking, navigate]);
   
