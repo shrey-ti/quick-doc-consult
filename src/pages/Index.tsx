@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { MessageCircle, Video, Phone, Calendar } from "lucide-react";
+import { MessageCircle, Video, Phone, Calendar, Send } from "lucide-react";
 
 const Index = () => {
   const [searchInput, setSearchInput] = useState("");
@@ -20,8 +20,12 @@ const Index = () => {
     navigate("/symptoms", { state: { initialSymptom: symptom } });
   };
 
-  const suggestedSymptoms = [
-    "Headache", "Fever", "Cough", "Sore Throat", "Back Pain"
+  const suggestedPrompts = [
+    "I have a severe headache that started this morning",
+    "I'm experiencing fever and body ache",
+    "I have a persistent cough with sore throat",
+    "I'm having back pain for the last few days",
+    "I feel dizzy and nauseous"
   ];
 
   return (
@@ -75,39 +79,48 @@ const Index = () => {
             Describe your symptoms and get matched with the right doctor in minutes. No registration required.
           </p>
 
-          {/* Main Search Box */}
+          {/* Chat-like Interface */}
           <div className="w-full max-w-2xl mx-auto mb-8">
-            <form onSubmit={handleSymptomSubmit} className="relative">
-              <Input
-                type="text"
-                placeholder="Describe your symptoms to get started..."
-                className="w-full py-6 px-6 text-lg rounded-full shadow-lg border-0 input-shadow focus-visible:ring-2 focus-visible:ring-primary"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-              />
-              <Button 
-                type="submit" 
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full h-10"
-              >
-                Get Help
-              </Button>
-            </form>
-          </div>
+            <div className="bg-white rounded-2xl shadow-lg p-6 mb-4">
+              <div className="flex items-start space-x-3 mb-4">
+                <div className="bg-blue-100 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">
+                  <MessageCircle className="h-4 w-4 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-gray-800">Hello! I'm here to help you get medical advice. How can I assist you today?</p>
+                </div>
+              </div>
+              
+              <form onSubmit={handleSymptomSubmit} className="relative">
+                <Input
+                  type="text"
+                  placeholder="Describe your symptoms or health concern..."
+                  className="w-full py-4 px-4 text-lg rounded-xl shadow-sm border-gray-200 focus-visible:ring-2 focus-visible:ring-primary"
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                />
+                <Button 
+                  type="submit" 
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg h-10"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </form>
+            </div>
 
-          {/* Suggested Symptoms */}
-          <div className="flex flex-wrap justify-center gap-2 mb-12">
-            <span className="text-sm text-gray-500 mr-2 pt-2">Popular:</span>
-            {suggestedSymptoms.map((symptom) => (
-              <Button
-                key={symptom}
-                variant="outline" 
-                size="sm"
-                className="rounded-full bg-white hover:bg-gray-100 border-gray-200"
-                onClick={() => handleSuggestedSymptom(symptom)}
-              >
-                {symptom}
-              </Button>
-            ))}
+            {/* Suggested Prompts */}
+            <div className="space-y-2">
+              <p className="text-sm text-gray-500 mb-2">Try saying:</p>
+              {suggestedPrompts.map((prompt, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleSuggestedSymptom(prompt)}
+                  className="w-full text-left p-3 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow text-gray-700 hover:bg-gray-50"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Features */}
@@ -116,23 +129,23 @@ const Index = () => {
               <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto">
                 <MessageCircle className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Describe Symptoms</h3>
-              <p className="text-gray-600 text-sm">Tell us what's wrong in simple words</p>
+              <h3 className="font-semibold text-lg mb-2">AI-Powered Chat</h3>
+              <p className="text-gray-600 text-sm">Natural conversation to understand your symptoms</p>
             </div>
             
             <div className="p-6 bg-white rounded-xl shadow-sm card-hover">
               <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto">
                 <Calendar className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Choose Doctor</h3>
-              <p className="text-gray-600 text-sm">Select from our recommended specialists</p>
+              <h3 className="font-semibold text-lg mb-2">Smart Matching</h3>
+              <p className="text-gray-600 text-sm">Get matched with the right specialist</p>
             </div>
             
             <div className="p-6 bg-white rounded-xl shadow-sm card-hover">
               <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto">
                 <Video className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Pick Consultation</h3>
+              <h3 className="font-semibold text-lg mb-2">Flexible Consultations</h3>
               <p className="text-gray-600 text-sm">Video, audio, chat or in-person</p>
             </div>
             
@@ -140,7 +153,7 @@ const Index = () => {
               <div className="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mb-4 mx-auto">
                 <Phone className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Get Help Fast</h3>
+              <h3 className="font-semibold text-lg mb-2">Quick Response</h3>
               <p className="text-gray-600 text-sm">Connect with doctors in minutes</p>
             </div>
           </div>

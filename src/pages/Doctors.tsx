@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,12 +15,8 @@ import {
 import { toast } from "sonner";
 
 interface LocationState {
-  patientData: {
-    age: string;
-    gender: string;
-    symptoms: string[];
-    [key: string]: any;
-  };
+  symptoms: string[];
+  recommendedSpecialties: string[];
 }
 
 interface Doctor {
@@ -41,9 +36,7 @@ interface Doctor {
 const Doctors = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { patientData } = (location.state as LocationState) || { 
-    patientData: { age: "", gender: "", symptoms: [] } 
-  };
+  const { symptoms = [], recommendedSpecialties = [] } = (location.state as LocationState) || {};
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [filter, setFilter] = useState("all");
   
@@ -116,16 +109,18 @@ const Doctors = () => {
     }
   ];
 
-  const filteredDoctors = filter === "available" 
-    ? doctors.filter(doctor => doctor.availableToday)
-    : doctors;
+  // Filter doctors based on recommended specialties
+  const filteredDoctors = doctors.filter(doctor => 
+    recommendedSpecialties.includes(doctor.specialty) &&
+    (filter === "all" || (filter === "available" && doctor.availableToday))
+  );
 
   const handleSelectDoctor = (doctor: Doctor) => {
     setSelectedDoctor(doctor);
     toast.success(`Selected ${doctor.name}`);
     // In a real app, we'd scroll to the next section or navigate
     setTimeout(() => {
-      navigate("/booking", { state: { doctor, patientData } });
+      navigate("/booking", { state: { doctor, symptoms } });
     }, 500);
   };
 
@@ -161,7 +156,7 @@ const Doctors = () => {
           <div className="mb-6 bg-blue-50 rounded-lg p-4">
             <h2 className="text-lg font-semibold mb-2">Consultation for</h2>
             <div className="flex flex-wrap gap-2 mb-2">
-              {patientData.symptoms.map((symptom, index) => (
+              {symptoms.map((symptom, index) => (
                 <Badge 
                   key={index} 
                   variant="secondary" 
@@ -172,7 +167,7 @@ const Doctors = () => {
               ))}
             </div>
             <p className="text-sm text-gray-600">
-              {patientData.age} year old {patientData.gender}
+              Recommended Specialties: {recommendedSpecialties.join(", ")}
             </p>
           </div>
           
@@ -203,11 +198,12 @@ const Doctors = () => {
               filteredDoctors.map((doctor) => (
                 <Card
                   key={doctor.id}
-                  className={`overflow-hidden transition-all ${
+                  className={`overflow-hidden transition-all cursor-pointer ${
                     selectedDoctor?.id === doctor.id
                       ? "ring-2 ring-primary"
                       : "hover:shadow-md"
                   }`}
+                  onClick={() => handleSelectDoctor(doctor)}
                 >
                   <CardContent className="p-0">
                     <div className="flex flex-col md:flex-row">
@@ -248,109 +244,46 @@ const Doctors = () => {
                             <span className="ml-2 text-sm text-gray-600">{doctor.rating}</span>
                             <span className="mx-2 text-gray-300">•</span>
                             <span className="text-sm text-gray-600">{doctor.experience} experience</span>
-                            <span className="mx-2 text-gray-300">•</span>
-                            <span className="text-sm text-gray-600">{doctor.consultations}+ consultations</span>
                           </div>
                           
                           <div className="flex flex-wrap gap-2 mb-3">
-                            {doctor.expertise.map((item, index) => (
+                            {doctor.consultationTypes.map((type) => (
                               <Badge 
-                                key={index} 
+                                key={type} 
                                 variant="outline" 
-                                className="bg-blue-50 border-blue-100 text-gray-800"
+                                className="text-xs"
                               >
-                                {item}
+                                {type}
+                              </Badge>
+                            ))}
+                          </div>
+                          
+                          <div className="flex flex-wrap gap-2">
+                            {doctor.expertise.slice(0, 3).map((expertise) => (
+                              <Badge 
+                                key={expertise} 
+                                variant="secondary" 
+                                className="text-xs bg-gray-100"
+                              >
+                                {expertise}
                               </Badge>
                             ))}
                           </div>
                         </div>
                         
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4 pt-4 border-t">
-                          <div className="flex items-center mb-3 sm:mb-0">
-                            <TooltipProvider>
-                              <div className="flex space-x-2">
-                                {doctor.consultationTypes.includes("video") && (
-                                  <Tooltip>
-                                    <TooltipTrigger>
-                                      <div className="p-2 bg-gray-100 rounded-full">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                          <polygon points="23 7 16 12 23 17 23 7"/>
-                                          <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
-                                        </svg>
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Video consultation available</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                )}
-                                
-                                {doctor.consultationTypes.includes("audio") && (
-                                  <Tooltip>
-                                    <TooltipTrigger>
-                                      <div className="p-2 bg-gray-100 rounded-full">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-                                          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                                          <line x1="12" y1="19" x2="12" y2="23"/>
-                                          <line x1="8" y1="23" x2="16" y2="23"/>
-                                        </svg>
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Audio consultation available</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                )}
-                                
-                                {doctor.consultationTypes.includes("chat") && (
-                                  <Tooltip>
-                                    <TooltipTrigger>
-                                      <div className="p-2 bg-gray-100 rounded-full">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                                        </svg>
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>Chat consultation available</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                )}
-                                
-                                {doctor.consultationTypes.includes("in-person") && (
-                                  <Tooltip>
-                                    <TooltipTrigger>
-                                      <div className="p-2 bg-gray-100 rounded-full">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                          <circle cx="8.5" cy="7" r="4"/>
-                                          <line x1="20" y1="8" x2="20" y2="14"/>
-                                          <line x1="23" y1="11" x2="17" y2="11"/>
-                                        </svg>
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                      <p>In-person consultation available</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                )}
-                              </div>
-                            </TooltipProvider>
+                        <div className="mt-4 flex items-center justify-between">
+                          <div className="text-lg font-semibold">
+                            ${doctor.price} <span className="text-sm text-gray-500">/consultation</span>
                           </div>
-                          
-                          <div className="flex items-center w-full sm:w-auto justify-between sm:justify-start gap-4">
-                            <div className="text-right">
-                              <p className="text-2xl font-bold text-primary">${doctor.price}</p>
-                              <p className="text-sm text-gray-500">per consultation</p>
-                            </div>
-                            <Button
-                              onClick={() => handleSelectDoctor(doctor)}
-                              className="whitespace-nowrap"
-                            >
-                              Select Doctor
-                            </Button>
-                          </div>
+                          <Button 
+                            variant="default"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSelectDoctor(doctor);
+                            }}
+                          >
+                            Book Now
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -360,6 +293,13 @@ const Doctors = () => {
             ) : (
               <div className="text-center py-8">
                 <p className="text-gray-500">No doctors found matching your criteria.</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => setFilter("all")}
+                >
+                  Show All Doctors
+                </Button>
               </div>
             )}
           </div>
