@@ -16,6 +16,11 @@ interface LocationState {
   initialSymptom?: string;
 }
 
+const commonSymptoms = [
+  "Headache", "Fever", "Cough", "Sore Throat", 
+  "Back Pain", "Stomach Pain", "Fatigue", "Dizziness"
+];
+
 const Symptoms = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -77,6 +82,11 @@ const Symptoms = () => {
     }
   };
 
+  // Get available common symptoms (exclude already selected ones)
+  const getAvailableCommonSymptoms = () => {
+    return commonSymptoms.filter(symptom => !symptoms.includes(symptom));
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Simple Header */}
@@ -106,6 +116,23 @@ const Symptoms = () => {
           </div>
           
           <div className="space-y-6">
+            {/* Common symptoms suggestions displayed prominently */}
+            <div className="mb-6">
+              <h3 className="text-md font-medium mb-3 text-gray-700">Common symptoms:</h3>
+              <div className="flex flex-wrap gap-2">
+                {getAvailableCommonSymptoms().map((symptom, index) => (
+                  <Badge 
+                    key={index} 
+                    variant="outline" 
+                    className="px-3 py-1.5 text-base cursor-pointer hover:bg-primary hover:text-white transition-colors"
+                    onClick={() => addSymptom(symptom)}
+                  >
+                    + {symptom}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+            
             {/* Symptoms entry */}
             <div>
               <div className="flex flex-wrap gap-2 mb-4">
