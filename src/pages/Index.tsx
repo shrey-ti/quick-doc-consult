@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +36,11 @@ const Index = () => {
             <a href="#how-it-works" className="text-gray-600 hover:text-primary transition-colors">How it works</a>
             <a href="#services" className="text-gray-600 hover:text-primary transition-colors">Services</a>
             <a href="#doctors" className="text-gray-600 hover:text-primary transition-colors">Doctors</a>
-            <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-white">
+            <Button 
+              variant="outline" 
+              className="border-primary text-primary hover:bg-primary hover:text-white"
+              onClick={() => navigate("/doctor-registration")}
+            >
               For Doctors
             </Button>
           </nav>
