@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -72,34 +71,100 @@ type DoctorFormValues = z.infer<typeof doctorFormSchema>;
 
 // Available specializations
 const specializations = [
-  "General Physician",
-  "Cardiologist",
+  "General Physician / Family Medicine",
   "Dermatologist",
-  "Neurologist",
-  "Orthopedic",
   "Pediatrician",
-  "Psychiatrist",
-  "Ophthalmologist",
-  "ENT Specialist",
-  "Dentist",
   "Gynecologist",
+  "Psychiatrist / Psychologist",
+  "ENT Specialist",
+  "Cardiologist",
+  "Gastroenterologist",
+  "Orthopedic",
+  "Neurologist",
+  "Pulmonologist",
   "Urologist",
+  "Endocrinologist",
+  "Ophthalmologist",
+  "Dentist"
 ];
 
 // Disease categories
 const diseaseCategories = [
-  { id: "respiratory", label: "Respiratory Conditions", symptoms: ["Cough", "Shortness of Breath", "Wheezing"] },
-  { id: "cardiovascular", label: "Cardiovascular Diseases", symptoms: ["Chest Pain", "Palpitations", "Hypertension"] },
-  { id: "dermatological", label: "Skin Conditions", symptoms: ["Rash", "Itching", "Skin Lesions"] },
-  { id: "neurological", label: "Neurological Disorders", symptoms: ["Headache", "Dizziness", "Numbness"] },
-  { id: "musculoskeletal", label: "Musculoskeletal Issues", symptoms: ["Joint Pain", "Back Pain", "Muscle Weakness"] },
-  { id: "gastrointestinal", label: "Digestive System", symptoms: ["Abdominal Pain", "Nausea", "Diarrhea"] },
-  { id: "ent", label: "Ear, Nose, and Throat", symptoms: ["Sore Throat", "Ear Pain", "Nasal Congestion"] },
-  { id: "ophthalmic", label: "Eye Conditions", symptoms: ["Blurred Vision", "Eye Pain", "Redness"] },
-  { id: "urinary", label: "Urinary System", symptoms: ["Frequent Urination", "Burning Sensation", "Blood in Urine"] },
-  { id: "endocrine", label: "Hormonal Disorders", symptoms: ["Fatigue", "Weight Changes", "Excessive Thirst"] },
-  { id: "mental", label: "Mental Health", symptoms: ["Anxiety", "Depression", "Sleep Problems"] },
-  { id: "pediatric", label: "Pediatric Conditions", symptoms: ["Fever in Children", "Growth Issues", "Developmental Delays"] },
+  { 
+    id: "general_physician", 
+    label: "General Physician / Family Medicine", 
+    symptoms: ["Common colds", "fever", "fatigue", "minor infections", "headache"] 
+  },
+  { 
+    id: "dermatologist", 
+    label: "Dermatologist", 
+    symptoms: ["Acne", "rashes", "skin infections", "hair loss", "fungal issues"] 
+  },
+  { 
+    id: "pediatrician", 
+    label: "Pediatrician", 
+    symptoms: ["Child-specific issues", "cough", "growth", "infections in kids"] 
+  },
+  { 
+    id: "gynecologist", 
+    label: "Gynecologist", 
+    symptoms: ["Menstrual issues", "pregnancy", "PCOS", "fertility"] 
+  },
+  { 
+    id: "psychiatrist", 
+    label: "Psychiatrist / Psychologist", 
+    symptoms: ["Anxiety", "depression", "sleep problems", "behavioral concerns"] 
+  },
+  { 
+    id: "ent", 
+    label: "ENT Specialist", 
+    symptoms: ["Earache", "sore throat", "sinus", "dizziness"] 
+  },
+  { 
+    id: "cardiologist", 
+    label: "Cardiologist", 
+    symptoms: ["Chest pain", "palpitations", "high BP", "heart health"] 
+  },
+  { 
+    id: "gastroenterologist", 
+    label: "Gastroenterologist", 
+    symptoms: ["Indigestion", "stomach pain", "acid reflux", "IBS"] 
+  },
+  { 
+    id: "orthopedic", 
+    label: "Orthopedic", 
+    symptoms: ["Joint pain", "back pain", "fractures", "arthritis"] 
+  },
+  { 
+    id: "neurologist", 
+    label: "Neurologist", 
+    symptoms: ["Seizures", "migraines", "numbness", "memory issues"] 
+  },
+  { 
+    id: "pulmonologist", 
+    label: "Pulmonologist", 
+    symptoms: ["Breathlessness", "cough", "asthma", "post-COVID care"] 
+  },
+  { 
+    id: "urologist", 
+    label: "Urologist", 
+    symptoms: ["Urination issues", "UTIs", "kidney pain", "male fertility"] 
+  },
+  { 
+    id: "endocrinologist", 
+    label: "Endocrinologist", 
+    symptoms: ["Diabetes", "thyroid issues", "hormonal disorders"] 
+  },
+  { 
+    id: "ophthalmologist", 
+    label: "Ophthalmologist", 
+    symptoms: ["Eye strain", "blurry vision", "infections", "injury"] 
+  },
+  { 
+    id: "dentist", 
+    label: "Dentist", 
+    symptoms: ["Toothache", "gum swelling", "cavity", "braces"] 
+  }
 ];
 
 // Consultation types
