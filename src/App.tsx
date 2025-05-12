@@ -11,6 +11,7 @@ import Doctors from "./pages/Doctors";
 import Booking from "./pages/Booking";
 import Confirmation from "./pages/Confirmation";
 import NotFound from "./pages/NotFound";
+import DoctorRegistration from "./pages/DoctorRegistration";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/doctors" element={<Doctors />} />
           <Route path="/booking" element={<Booking />} />
           <Route path="/confirmation" element={<Confirmation />} />
+          <Route path="/doctor-registration" element={<DoctorRegistration />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
