@@ -76,7 +76,7 @@ const DoctorDashboard = () => {
     // Check if doctor is logged in
     const doctorMobile = localStorage.getItem("currentDoctor");
     if (!doctorMobile) {
-      navigate("/doctor-login");
+      navigate("/login");
       return;
     }
     setCurrentDoctor(doctorMobile);
@@ -95,7 +95,7 @@ const DoctorDashboard = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("currentDoctor");
-    navigate("/doctor-login");
+    navigate("/login");
   };
 
   const handlePatientClick = (patientId: number) => {

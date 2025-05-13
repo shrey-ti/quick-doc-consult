@@ -89,7 +89,7 @@ const DoctorChat = () => {
     // Check if doctor is logged in
     const doctorMobile = localStorage.getItem("currentDoctor");
     if (!doctorMobile) {
-      navigate("/doctor-login");
+      navigate("/login");
       return;
     }
     setCurrentDoctor(doctorMobile);

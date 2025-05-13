@@ -145,77 +145,68 @@ const Index = () => {
           <div className="flex items-center">
             <div className="text-primary font-bold text-2xl">MediConsult</div>
           </div>
+          
           <nav className="hidden md:flex items-center gap-6">
             <a href="#how-it-works" className="text-gray-600 hover:text-primary transition-colors">How it works</a>
             <a href="#services" className="text-gray-600 hover:text-primary transition-colors">Services</a>
             <a href="#doctors" className="text-gray-600 hover:text-primary transition-colors">Doctors</a>
-            <Button 
-              variant="outline" 
-              className="border-primary text-primary hover:bg-primary hover:text-white"
-              onClick={() => navigate("/consultation-history")}
-            >
-              View History
-            </Button>
-            {isPatientLoggedIn || isDoctorLoggedIn ? (
-              <Button 
-                variant="outline" 
-                className="flex items-center gap-2"
-                onClick={handleLogout}
+          </nav>
+          
+          <div className="flex items-center gap-2">
+            <Button className="md:hidden" variant="ghost" size="icon">
+              <span className="sr-only">Open menu</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                  <polyline points="16 17 21 12 16 7" />
-                  <line x1="21" y1="12" x2="9" y2="12" />
-                </svg>
-                Logout
-              </Button>
+                <line x1="4" x2="20" y1="12" y2="12" />
+                <line x1="4" x2="20" y1="6" y2="6" />
+                <line x1="4" x2="20" y1="18" y2="18" />
+              </svg>
+            </Button>
+            
+            {isPatientLoggedIn || isDoctorLoggedIn ? (
+              <>
+                <Button 
+                  variant="ghost" 
+                  onClick={handleViewHistory}
+                  className="flex items-center gap-2"
+                >
+                  <History className="h-4 w-4" />
+                  View History
+                </Button>
+                
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={handleLogout}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                  </svg>
+                  Logout
+                </Button>
+              </>
             ) : (
               <Button 
-                variant="default" 
-                className="bg-primary hover:bg-primary/90"
+                variant="ghost" 
                 onClick={() => navigate("/login")}
+                className="flex items-center gap-2 md:bg-primary md:text-white md:hover:bg-primary/90"
               >
+                <User className="h-4 w-4" />
                 Login
               </Button>
             )}
-          </nav>
-          <Button className="md:hidden" variant="ghost" size="icon">
-            <span className="sr-only">Open menu</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <line x1="4" x2="20" y1="12" y2="12" />
-              <line x1="4" x2="20" y1="6" y2="6" />
-              <line x1="4" x2="20" y1="18" y2="18" />
-            </svg>
-          </Button>
-          {isPatientLoggedIn || isDoctorLoggedIn ? (
-            <Button 
-              variant="ghost" 
-              onClick={handleViewHistory}
-              className="flex items-center gap-2"
-            >
-              <History className="h-4 w-4" />
-              View History
-            </Button>
-          ) : (
-            <Button 
-              variant="ghost" 
-              onClick={() => navigate("/login")}
-              className="flex items-center gap-2"
-            >
-              <User className="h-4 w-4" />
-              Login
-            </Button>
-          )}
+          </div>
         </div>
       </header>
 
