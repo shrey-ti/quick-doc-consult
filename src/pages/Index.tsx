@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { MessageCircle, Video, Phone, Calendar, Send, History } from "lucide-react";
+import { MessageCircle, Video, Phone, Calendar, Send, History, User } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import {
@@ -21,6 +21,19 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showMobileModal, setShowMobileModal] = useState(false);
   
+  // Check if user is logged in
+  const isPatientLoggedIn = localStorage.getItem("mediconsult_mobile");
+  const isDoctorLoggedIn = localStorage.getItem("currentDoctor");
+  
+  const handleLogout = () => {
+    // Clear both patient and doctor logins
+    localStorage.removeItem("mediconsult_mobile");
+    localStorage.removeItem("currentDoctor");
+    toast.success("Logged out successfully");
+    // Refresh current page
+    window.location.reload();
+  };
+
   const handleSymptomSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchInput.trim()) {
@@ -143,13 +156,28 @@ const Index = () => {
             >
               View History
             </Button>
-            <Button 
-              variant="outline" 
-              className="border-primary text-primary hover:bg-primary hover:text-white"
-              onClick={() => navigate("/doctor-login")}
-            >
-              For Doctors
-            </Button>
+            {isPatientLoggedIn || isDoctorLoggedIn ? (
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2"
+                onClick={handleLogout}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Logout
+              </Button>
+            ) : (
+              <Button 
+                variant="default" 
+                className="bg-primary hover:bg-primary/90"
+                onClick={() => navigate("/login")}
+              >
+                Login
+              </Button>
+            )}
           </nav>
           <Button className="md:hidden" variant="ghost" size="icon">
             <span className="sr-only">Open menu</span>
@@ -169,14 +197,25 @@ const Index = () => {
               <line x1="4" x2="20" y1="18" y2="18" />
             </svg>
           </Button>
-          <Button 
-            variant="ghost" 
-            onClick={handleViewHistory}
-            className="flex items-center gap-2"
-          >
-            <History className="h-4 w-4" />
-            View History
-          </Button>
+          {isPatientLoggedIn || isDoctorLoggedIn ? (
+            <Button 
+              variant="ghost" 
+              onClick={handleViewHistory}
+              className="flex items-center gap-2"
+            >
+              <History className="h-4 w-4" />
+              View History
+            </Button>
+          ) : (
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate("/login")}
+              className="flex items-center gap-2"
+            >
+              <User className="h-4 w-4" />
+              Login
+            </Button>
+          )}
         </div>
       </header>
 

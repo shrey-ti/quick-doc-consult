@@ -14,6 +14,7 @@ import DoctorLogin from "./pages/DoctorLogin";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import DoctorChat from "./pages/DoctorChat";
 import ConsultationHistory from "./pages/ConsultationHistory";
+import Login from "./pages/Login";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/doctors" element={<Doctors />} />
           <Route path="/booking" element={<Booking />} />
           <Route path="/confirmation" element={<Confirmation />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/doctor-login" element={<DoctorLogin />} />
           <Route path="/doctor-registration" element={<DoctorRegistration />} />
           <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
