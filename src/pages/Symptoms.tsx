@@ -295,7 +295,7 @@ const Symptoms = () => {
       
       // First response after detecting the flow
       if (questionIndex === 0) {
-        setQuestionIndex(1); // Move to first question
+        setQuestionIndex(2); // Skip to second question since we're showing first question with initial message
         // Return both the initial message and first question
         return `${flow.initial}\n\n${flow.followUps[0]}`;
       } 
@@ -318,7 +318,7 @@ const Symptoms = () => {
       const matchedFlow = findMatchingFlow(symptom);
       if (matchedFlow) {
         setCurrentFlow(matchedFlow);
-        setQuestionIndex(1); // Set to 1 because we're returning both initial and first question
+        setQuestionIndex(2); // Skip to second question since we're showing first question with initial message
         const flow = conversationFlows[matchedFlow];
         return `${flow.initial}\n\n${flow.followUps[0]}`;
       }
