@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,7 +72,6 @@ const Doctors = () => {
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [priceRange, setPriceRange] = useState([0, 100]);
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>("all");
   const [sortOption, setSortOption] = useState<string>("rating");
   const [expandedDoctor, setExpandedDoctor] = useState<number | null>(null);
@@ -143,8 +142,79 @@ const Doctors = () => {
       consultationTypes: ["video", "in-person"],
       expertise: ["Headache", "Migraines", "Dizziness", "Stroke"],
       price: 70
+    },
+    // New cardiologists
+    {
+      id: 6,
+      name: "Dr. James Rodriguez",
+      photo: "https://images.unsplash.com/photo-1582750433449-648ed127bb54?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
+      specialty: "Cardiologist",
+      experience: "15 years",
+      consultations: 1250,
+      rating: 4.9,
+      availableToday: true,
+      consultationTypes: ["video", "audio", "in-person"],
+      expertise: ["Heart Disease", "Arrhythmia", "Cardiac Rehabilitation", "Preventive Cardiology"],
+      price: 75
+    },
+    {
+      id: 7,
+      name: "Dr. Sophia Patel",
+      photo: "https://images.unsplash.com/photo-1559839914-17aae19cec71?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
+      specialty: "Cardiologist",
+      experience: "8 years",
+      consultations: 720,
+      rating: 4.7,
+      availableToday: false,
+      consultationTypes: ["video", "audio", "chat", "in-person"],
+      expertise: ["Interventional Cardiology", "Coronary Artery Disease", "Hypertension"],
+      price: 60
+    },
+    {
+      id: 8,
+      name: "Dr. David Kim",
+      photo: "https://images.unsplash.com/photo-1612531386530-97286d97c2d2?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
+      specialty: "Cardiologist",
+      experience: "20 years",
+      consultations: 1850,
+      rating: 4.9,
+      availableToday: true,
+      consultationTypes: ["video", "in-person"],
+      expertise: ["Heart Failure", "Cardiovascular Imaging", "Heart Valve Disease"],
+      price: 85
+    },
+    {
+      id: 9,
+      name: "Dr. Maria Garcia",
+      photo: "https://images.unsplash.com/photo-1527613426441-4da17471b66d?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.0.3",
+      specialty: "Cardiologist",
+      experience: "10 years",
+      consultations: 930,
+      rating: 4.6,
+      availableToday: true,
+      consultationTypes: ["video", "audio", "chat"],
+      expertise: ["Women's Heart Health", "Preventive Cardiology", "Cardiovascular Risk Assessment"],
+      price: 70
     }
   ];
+
+  // Get price range for slider with useMemo to avoid recalculation
+  const { minPrice, maxPrice } = useMemo(() => {
+    const min = Math.min(...doctors.map(doctor => doctor.price));
+    const max = Math.max(...doctors.map(doctor => doctor.price));
+    return { minPrice: min, maxPrice: max };
+  }, [doctors]);
+
+  // Initialize price range state with actual min and max values
+  const [priceRange, setPriceRange] = useState<number[]>([minPrice, maxPrice]);
+
+  // Update price range when min/max prices change
+  useEffect(() => {
+    // Only update the price range if it's outside the current bounds
+    if (priceRange[0] < minPrice || priceRange[1] > maxPrice) {
+      setPriceRange([minPrice, maxPrice]);
+    }
+  }, [minPrice, maxPrice, priceRange]);
 
   // Simulate loading
   useEffect(() => {
@@ -163,10 +233,6 @@ const Doctors = () => {
   // Get all available specialties for filtering
   const allSpecialties = ["all", ...new Set(doctors.map(doctor => doctor.specialty))];
   
-  // Get price range for slider
-  const minPrice = Math.min(...doctors.map(doctor => doctor.price));
-  const maxPrice = Math.max(...doctors.map(doctor => doctor.price));
-
   // Filter doctors based on all criteria
   const filteredDoctors = doctors
     .filter(doctor => 
@@ -326,6 +392,7 @@ const Doctors = () => {
                   </label>
                   <Slider
                     value={priceRange}
+                    defaultValue={[minPrice, maxPrice]}
                     min={minPrice}
                     max={maxPrice}
                     step={5}

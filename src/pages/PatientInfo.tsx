@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -35,8 +34,12 @@ const formSchema = z.object({
   gender: z.enum(["male", "female", "other"], {
     required_error: "Please select a gender",
   }),
-  weight: z.string().optional(),
-  height: z.string().optional(),
+  height: z.string().refine((val) => val === "" || (!isNaN(parseInt(val)) && parseInt(val) > 0 && parseInt(val) < 300), {
+    message: "Please enter a valid height in centimeters",
+  }),
+  weight: z.string().refine((val) => val === "" || (!isNaN(parseInt(val)) && parseInt(val) > 0 && parseInt(val) < 500), {
+    message: "Please enter a valid weight in kilograms",
+  }),
   previousConditions: z.string().optional(),
   medications: z.string().optional(),
   allergies: z.string().optional(),
@@ -126,7 +129,7 @@ const PatientInfo = () => {
                   name="age"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Age<span className="text-red-500">*</span></FormLabel>
+                      <FormLabel>Age<span className="text-red-500">*</span> (years)</FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -174,8 +177,10 @@ const PatientInfo = () => {
                       <FormControl>
                         <Input
                           {...field}
-                          placeholder="Optional"
+                          placeholder="Enter weight in kg"
                           type="number"
+                          min="1"
+                          max="500"
                         />
                       </FormControl>
                       <FormMessage />
@@ -192,8 +197,10 @@ const PatientInfo = () => {
                       <FormControl>
                         <Input
                           {...field}
-                          placeholder="Optional"
+                          placeholder="Enter height in cm"
                           type="number"
+                          min="1"
+                          max="300"
                         />
                       </FormControl>
                       <FormMessage />
