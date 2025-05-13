@@ -23,12 +23,24 @@ interface LocationState {
   mobileNumber: string;
 }
 
-interface PatientInfo {
-  age: string;
-  gender: string;
-  height: string;
-  weight: string;
-}
+// List of specializations for the doctor recommendations
+const specializations = [
+  "General Physician / Family Medicine",
+  "Dermatologist",
+  "Pediatrician",
+  "Gynecologist",
+  "Psychiatrist / Psychologist",
+  "ENT Specialist",
+  "Cardiologist",
+  "Gastroenterologist",
+  "Orthopedic",
+  "Neurologist",
+  "Pulmonologist",
+  "Urologist",
+  "Endocrinologist",
+  "Ophthalmologist",
+  "Dentist"
+];
 
 const commonSymptoms = [
   "Headache", "Fever", "Cough", "Sore Throat", 
@@ -45,129 +57,24 @@ const Symptoms = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [symptoms, setSymptoms] = useState<string[]>([]);
   
-  // Add a new state to track the current conversation flow
-  const [currentFlow, setCurrentFlow] = useState<string | null>(null);
-  // Add a state to track the current question index
-  const [questionIndex, setQuestionIndex] = useState(0);
+  // Add this new state near the other state variables
+  const [debugMode, setDebugMode] = useState(false);
+  
+  // AI chat state
+  const [chatContext, setChatContext] = useState<{
+    followUpCount: number;
+    initialSymptomAnalyzed: boolean;
+    conversationComplete: boolean;
+    finalSpecialist: string | null;
+  }>({
+    followUpCount: 0,
+    initialSymptomAnalyzed: false,
+    conversationComplete: false,
+    finalSpecialist: null
+  });
 
-  // Mock conversation flows for common scenarios
-  const conversationFlows = {
-    "severe headache": {
-      initial: "I understand you're experiencing a severe headache. Let me ask you a few questions to better understand your condition.",
-      followUps: [
-        "First, could you tell me your age?",
-        "What is your gender?",
-        "What is your height and weight?",
-        "How long have you had the headache?",
-        "Is it on one side or both sides?",
-        "Rate your pain from 1-10",
-        "Do you have any other symptoms like nausea or sensitivity to light?",
-        "Have you taken any pain medication?",
-        "Do you have any pre-existing medical conditions?",
-        "Are you currently taking any medications?",
-      ],
-      final: "Based on your symptoms and information, I recommend consulting with a neurologist or general physician. Would you like to proceed with booking a consultation?"
-    },
-    "fever and body ache": {
-      initial: "I see you're experiencing fever and body ache. Let's gather more information about your symptoms.",
-      followUps: [
-        "First, could you tell me your age?",
-        "What is your gender?",
-        "What is your height and weight?",
-        "What's your temperature?",
-        "When did the fever start?",
-        "Are you experiencing any other symptoms?",
-        "Have you taken any fever medication?",
-        "Do you have any respiratory symptoms?",
-        "Do you have any pre-existing medical conditions?",
-        "Are you currently taking any medications?",
-      ],
-      final: "Given your symptoms and information, I recommend seeing a general physician. Would you like to book a consultation?"
-    },
-    "persistent cough with sore throat": {
-      initial: "I understand you have a persistent cough and sore throat. Let me ask you some questions to better assess your condition.",
-      followUps: [
-        "First, could you tell me your age?",
-        "What is your gender?",
-        "What is your height and weight?",
-        "How long have you had these symptoms?",
-        "Is it a dry or wet cough?",
-        "Is it painful to swallow?",
-        "Do you have any fever?",
-        "Have you tried any over-the-counter medications?",
-        "Do you have any pre-existing medical conditions?",
-        "Are you currently taking any medications?",
-      ],
-      final: "Based on your symptoms and information, I recommend consulting with an ENT specialist or general physician. Would you like to proceed with booking?"
-    },
-    "back pain": {
-      initial: "I see you're experiencing back pain. Let's understand more about your condition.",
-      followUps: [
-        "First, could you tell me your age?",
-        "What is your gender?",
-        "What is your height and weight?",
-        "Where exactly is the pain located?",
-        "How long have you been experiencing it?",
-        "Did you do any heavy lifting recently?",
-        "Does the pain radiate to other areas?",
-        "What makes the pain better or worse?",
-        "Do you have any pre-existing medical conditions?",
-        "Are you currently taking any medications?",
-      ],
-      final: "Given your symptoms and information, I recommend seeing an orthopedic specialist. Would you like to book a consultation?"
-    },
-    "dizzy and nauseous": {
-      initial: "I understand you're feeling dizzy and nauseous. Let me ask you some questions to better understand your condition.",
-      followUps: [
-        "First, could you tell me your age?",
-        "What is your gender?",
-        "What is your height and weight?",
-        "How long have you been feeling this way?",
-        "Is the dizziness constant or does it come and go?",
-        "Have you had any falls?",
-        "Are you experiencing any other symptoms?",
-        "Have you eaten anything unusual recently?",
-        "Do you have any pre-existing medical conditions?",
-        "Are you currently taking any medications?",
-      ],
-      final: "Based on your symptoms and information, I recommend consulting with a general physician. Would you like to proceed with booking a consultation?"
-    },
-    // Add a specific flow for just "headache"
-    "headache": {
-      initial: "I see you're experiencing a headache. Let me ask you some questions to better understand your condition.",
-      followUps: [
-        "First, could you tell me your age?",
-        "What is your gender?",
-        "What is your height and weight?",
-        "How long have you had the headache?",
-        "Is it on one side or both sides?",
-        "Rate your pain from 1-10",
-        "Do you have any other symptoms like nausea or sensitivity to light?",
-        "Have you taken any pain medication?",
-        "Do you have any pre-existing medical conditions?",
-        "Are you currently taking any medications?",
-      ],
-      final: "Based on your symptoms and information, I recommend consulting with a neurologist or general physician. Would you like to proceed with booking a consultation?"
-    }
-  };
-
-  // Function to check for matching flow based on user input
-  const findMatchingFlow = (userInput: string): string | null => {
-    const normalizedInput = userInput.toLowerCase();
-    
-    for (const [key, flow] of Object.entries(conversationFlows)) {
-      if (normalizedInput.includes(key)) {
-        return key;
-      }
-    }
-    
-    // Special case for just "headache" without "severe"
-    if (normalizedInput.includes("headache") && !normalizedInput.includes("severe headache")) {
-      return "headache";
-    }
-    
-    return null;
-  };
+  // Get API key from environment
+  const GEMINI_API_KEY = import.meta.env.VITE_GOOGLE_GEMINI_API_KEY;
 
   // Scroll to bottom of messages
   const scrollToBottom = () => {
@@ -197,6 +104,208 @@ const Symptoms = () => {
     }
   }, [initialSymptom]);
 
+  // Add this retry function before the fetchGeminiResponse function
+  const fetchWithRetry = async (url: string, options: RequestInit, retries = 2, delay = 1000): Promise<Response> => {
+    try {
+      const response = await fetch(url, options);
+      if (response.ok) return response;
+      
+      // If we got a 429 (rate limit) or 5xx (server error), retry
+      if ((response.status === 429 || response.status >= 500) && retries > 0) {
+        console.log(`Retrying API call. Attempts left: ${retries}`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return fetchWithRetry(url, options, retries - 1, delay * 2);
+      }
+      
+      return response; // Return the error response if we can't retry
+    } catch (error) {
+      // Retry network errors (like connection issues)
+      if (retries > 0) {
+        console.log(`Network error, retrying. Attempts left: ${retries}`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        return fetchWithRetry(url, options, retries - 1, delay * 2);
+      }
+      throw error;
+    }
+  };
+
+  // Fetch response from Gemini API
+  const fetchGeminiResponse = async (conversationHistory: Message[]) => {
+    try {
+      // Check if API key is properly set
+      if (!GEMINI_API_KEY || GEMINI_API_KEY === "your_gemini_api_key_here") {
+        console.error("Gemini API key is not properly configured");
+        throw new Error("API_KEY_MISSING");
+      }
+
+      // Prepare the messages for the API request
+      const prompt = createPrompt(conversationHistory);
+      
+      // Log the API call without revealing the full key (for debugging)
+      console.log(`Calling Gemini API with prompt length: ${prompt.length}`);
+      console.log(`API Key configured: ${GEMINI_API_KEY ? "Yes" : "No"}`);
+      
+      // Use fetchWithRetry instead of fetch
+      const response = await fetchWithRetry(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text: prompt
+                  }
+                ]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              topK: 40,
+              topP: 0.95,
+              maxOutputTokens: 1024,
+            }
+          })
+        },
+        2, // Number of retries
+        1000 // Initial delay in ms
+      );
+      
+      // If response is not OK, get more detailed error information
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        console.error("API Error Response:", errorData);
+        
+        // Handle specific error types
+        if (response.status === 403) {
+          throw new Error("API_AUTH_ERROR");
+        } else if (response.status === 429) {
+          throw new Error("API_RATE_LIMIT");
+        } else {
+          throw new Error(`API_ERROR_${response.status}`);
+        }
+      }
+
+      const data = await response.json();
+      
+      // Process the response
+      if (data.candidates && data.candidates.length > 0) {
+        const textResponse = data.candidates[0].content.parts[0].text;
+        console.log("Received successful response from Gemini API");
+        
+        // Check if this is a final recommendation
+        if (textResponse.includes("Based on your responses, you should consult:")) {
+          // Extract the specialist recommendation
+          const recommendationMatch = textResponse.match(/Based on your responses, you should consult: (.*?)($|\n)/);
+          if (recommendationMatch && recommendationMatch[1]) {
+            const specialist = recommendationMatch[1].trim();
+            
+            // Update chat context
+            setChatContext(prev => ({
+              ...prev,
+              conversationComplete: true,
+              finalSpecialist: specialist
+            }));
+            
+            // After a delay, navigate to the doctors page
+            setTimeout(() => handleRedirectToDoctors(specialist), 2000);
+          }
+        } else {
+          // It's a follow-up question, update the context
+          setChatContext(prev => ({
+            ...prev,
+            followUpCount: prev.followUpCount + 1,
+            initialSymptomAnalyzed: true
+          }));
+        }
+        
+        return textResponse;
+      }
+      
+      throw new Error("NO_RESPONSE_DATA");
+    } catch (error) {
+      // Log the specific error
+      console.error("Error fetching from Gemini API:", error);
+      
+      // Handle different error types with appropriate messages
+      const errorMessage = error instanceof Error ? error.message : "UNKNOWN_ERROR";
+      
+      // Show specific toast messages based on error type
+      if (errorMessage === "API_KEY_MISSING") {
+        toast.error("API key is missing or invalid. Please check your environment setup.");
+      } else if (errorMessage === "API_AUTH_ERROR") {
+        toast.error("API authentication failed. Please check your API key.");
+      } else if (errorMessage === "API_RATE_LIMIT") {
+        toast.error("You've exceeded the API rate limit. Please try again later.");
+      } else if (errorMessage.startsWith("API_ERROR_")) {
+        toast.error("There was an issue connecting to the AI service.");
+      }
+      
+      // Return a generic error message if the API fails
+      return "I'm sorry, I'm having trouble analyzing your symptoms right now. Please try again in a moment.";
+    }
+  };
+
+  // Create the prompt for Gemini based on the conversation history
+  const createPrompt = (conversationHistory: Message[]): string => {
+    // Extract just the user messages for initial symptoms
+    const userMessages = conversationHistory.filter(msg => msg.sender === 'user');
+    
+    // Base prompt for initial symptom analysis
+    if (userMessages.length === 1) {
+      return `
+You are a medical assistant helping users identify which doctor specialist they should consult based on their symptoms. 
+I need you to analyze symptoms and ask 2-4 relevant follow-up questions to determine the appropriate medical specialist.
+
+Initial symptom from the patient: "${userMessages[0].text}"
+
+Based on this initial symptom, ask ONE follow-up question to better understand the patient's condition. 
+Keep your response brief and focused on a single question.
+`;
+    } 
+    // Prompt for follow-up questions
+    else if (!chatContext.conversationComplete) {
+      // Create a transcript of the conversation so far
+      const transcript = conversationHistory
+        .map(msg => `${msg.sender === 'user' ? 'Patient' : 'Assistant'}: ${msg.text}`)
+        .join('\n\n');
+        
+      // Determine if we should ask another follow-up or make a recommendation
+      if (chatContext.followUpCount < 3) {
+        return `
+You are a medical assistant helping users identify which doctor specialist they should consult based on their symptoms.
+Here is the conversation so far:
+
+${transcript}
+
+Based on this conversation, ask ONE more follow-up question to better understand the patient's condition.
+Keep your response brief and focused on a single question.
+`;
+      } else {
+        // Final prompt to make a recommendation
+        return `
+You are a medical assistant helping users identify which doctor specialist they should consult based on their symptoms.
+Here is the conversation so far:
+
+${transcript}
+
+Based on the patient's symptoms and responses, identify the most appropriate medical specialist from ONLY this list:
+${specializations.join(', ')}
+
+IMPORTANT: Select exactly ONE specialist from the list above.
+Format your response as: "Based on your responses, you should consult: [Specialist Name]"
+`;
+      }
+    }
+    
+    // Default prompt if none of the above conditions are met
+    return `Continue the conversation with the patient based on their symptoms and provide a helpful response.`;
+  };
+
   const handleUserMessage = async (message: string) => {
     // Add user message
     const userMessage: Message = {
@@ -205,146 +314,61 @@ const Symptoms = () => {
       sender: "user",
       timestamp: new Date(),
     };
+    
     setMessages(prev => [...prev, userMessage]);
     setInputValue("");
 
     // Simulate bot typing
     setIsTyping(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    // Add symptoms to the list if this is the first message
+    // If this is the first message, add it to symptoms
     if (messages.length <= 1) {
-      setSymptoms(prev => [...prev, message.toLowerCase()]);
-      
-      // Check if the initial message matches any flow
-      const matchedFlow = findMatchingFlow(message);
-      if (matchedFlow) {
-        setCurrentFlow(matchedFlow);
-        setQuestionIndex(0);
-      }
+      setSymptoms([message]);
     }
 
-    // Generate bot response
-    const botResponse = generateBotResponse(message.toLowerCase());
+    // Create updated messages array with the new user message
+    const updatedMessages = [...messages, userMessage];
+    
+    // Get response from Gemini API
+    const botResponse = await fetchGeminiResponse(updatedMessages);
+    
     const botMessage: Message = {
       id: (Date.now() + 1).toString(),
       text: botResponse,
       sender: "bot",
       timestamp: new Date(),
     };
+    
     setMessages(prev => [...prev, botMessage]);
     setIsTyping(false);
   };
 
-  const handleRedirectToDoctors = () => {
-    // Mock doctor recommendations based on symptoms
-    const doctorRecommendations = {
-      "headache": ["Neurologist", "General Physician"],
-      "fever": ["General Physician", "Infectious Disease Specialist"],
-      "cough": ["Pulmonologist", "ENT Specialist"],
-      "sore throat": ["ENT Specialist", "General Physician"],
-      "back pain": ["Orthopedic Specialist", "Physiotherapist"],
-      "dizziness": ["Neurologist", "General Physician"]
-    };
-
-    // Get unique recommendations based on all symptoms
-    const recommendedSpecialties = new Set(
-      symptoms.flatMap(symptom => 
-        doctorRecommendations[symptom as keyof typeof doctorRecommendations] || ["General Physician"]
-      )
-    );
-
-    // Extract patient information from messages
-    const patientInfo = messages.reduce((acc, message) => {
-      if (message.sender === "user") {
-        const text = message.text.toLowerCase();
-        if (text.includes("years old") || text.includes("age")) {
-          acc.age = text.match(/\d+/)?.[0] || "25";
-        } else if (text.includes("male") || text.includes("female")) {
-          acc.gender = text.includes("male") ? "Male" : "Female";
-        } else if (text.includes("height") || text.includes("weight")) {
-          const heightMatch = text.match(/(\d+)\s*(?:cm|ft|'|feet)/i);
-          const weightMatch = text.match(/(\d+)\s*(?:kg|lbs|pounds)/i);
-          if (heightMatch) acc.height = heightMatch[1];
-          if (weightMatch) acc.weight = weightMatch[1];
-        }
-      }
-      return acc;
-    }, { age: "25", gender: "Male", height: "170", weight: "70" } as PatientInfo);
-
-    // Create patient data structure
+  const handleRedirectToDoctors = (specialist: string = "") => {
+    // If we have a final specialist recommendation from the AI
+    if (chatContext.finalSpecialist || specialist) {
+      const recommendedSpecialist = specialist || chatContext.finalSpecialist;
+      
+      // Extract patient information
     const patientData = {
-      symptoms: symptoms,
-      age: patientInfo.age,
-      gender: patientInfo.gender,
-      height: patientInfo.height,
-      weight: patientInfo.weight,
-      recommendedSpecialties: Array.from(recommendedSpecialties),
-      mobileNumber // Add mobile number to patient data
-    };
+        symptoms,
+        recommendedSpecialties: recommendedSpecialist ? [recommendedSpecialist] : specializations.slice(0, 1),
+        mobileNumber
+      };
 
+      // Navigate to the doctors page with the recommendation
     navigate("/doctors", { 
       state: { patientData } 
     });
-  };
-
-  const generateBotResponse = (symptom: string): string => {
-    // If we have an active flow, follow it regardless of user input
-    if (currentFlow && conversationFlows[currentFlow]) {
-      const flow = conversationFlows[currentFlow];
-      
-      // First response after detecting the flow
-      if (questionIndex === 0) {
-        setQuestionIndex(2); // Skip to second question since we're showing first question with initial message
-        // Return both the initial message and first question
-        return `${flow.initial}\n\n${flow.followUps[0]}`;
-      } 
-      // Follow-up questions
-      else if (questionIndex <= flow.followUps.length) {
-        const question = flow.followUps[questionIndex - 1];
-        setQuestionIndex(questionIndex + 1); // Advance to next question
-        return question;
-      } 
-      // Final response after all questions
-      else {
-        // After all follow-ups, redirect to doctors page
-        setTimeout(handleRedirectToDoctors, 1500);
-        return flow.final;
-      }
+    } else {
+      // Fallback if no specialist was determined
+      toast.error("Could not determine an appropriate specialist. Please try again.");
     }
-    
-    // If no active flow was found in the first message, use default behavior
-    if (messages.length <= 2) {
-      const matchedFlow = findMatchingFlow(symptom);
-      if (matchedFlow) {
-        setCurrentFlow(matchedFlow);
-        setQuestionIndex(2); // Skip to second question since we're showing first question with initial message
-        const flow = conversationFlows[matchedFlow];
-        return `${flow.initial}\n\n${flow.followUps[0]}`;
-      }
-    }
-
-    // Default responses if no flow was matched
-    if (symptoms.length >= 3) {
-      // After collecting enough symptoms, redirect to doctors page
-      setTimeout(handleRedirectToDoctors, 1500);
-      return "Thank you for providing all the information. I'll connect you with the most suitable doctors for your condition.";
-    }
-    return "Could you tell me more about your symptoms? For example, how long have you been experiencing this?";
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim()) {
       handleUserMessage(inputValue);
-    }
-  };
-
-  const handleContinue = () => {
-    if (symptoms.length > 0) {
-      navigate("/patient-info", { state: { symptoms } });
-    } else {
-      toast.error("Please describe at least one symptom");
     }
   };
 
@@ -417,7 +441,7 @@ const Symptoms = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
               />
-              <Button type="submit" disabled={!inputValue.trim()}>
+              <Button type="submit" disabled={!inputValue.trim() || isTyping}>
                 <Send className="h-4 w-4" />
               </Button>
             </form>
@@ -431,6 +455,46 @@ const Symptoms = () => {
             >
               Back
             </Button>
+          </div>
+
+          {/* Add this debug button to the JSX, right before the Tips Section div */}
+          <div className="mt-4 border-t pt-4">
+            <div className="flex items-center justify-between">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setDebugMode(!debugMode)}
+                className="text-xs"
+              >
+                {debugMode ? "Hide Debug Info" : "Show Debug Info"}
+              </Button>
+              
+              {debugMode && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    // Reload the page to reset the chat
+                    window.location.reload();
+                  }}
+                  className="text-xs"
+                >
+                  Reset Chat
+                </Button>
+              )}
+            </div>
+            
+            {debugMode && (
+              <div className="mt-2 p-2 bg-gray-100 rounded text-xs font-mono">
+                <p>API Key configured: {GEMINI_API_KEY ? "Yes" : "No"}</p>
+                <p>API Key value: {GEMINI_API_KEY ? `${GEMINI_API_KEY.substring(0, 5)}...${GEMINI_API_KEY.substring(GEMINI_API_KEY.length - 3)}` : "Not set"}</p>
+                <p>Follow-up count: {chatContext.followUpCount}</p>
+                <p>Conversation complete: {chatContext.conversationComplete ? "Yes" : "No"}</p>
+                <p>Final specialist: {chatContext.finalSpecialist || "None yet"}</p>
+              </div>
+            )}
           </div>
         </div>
         
