@@ -14,6 +14,7 @@ import DoctorRegistration from "./pages/DoctorRegistration";
 import DoctorLogin from "./pages/DoctorLogin";
 import DoctorDashboard from "./pages/DoctorDashboard";
 import DoctorChat from "./pages/DoctorChat";
+import ConsultationHistory from "./pages/ConsultationHistory";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/doctor-registration" element={<DoctorRegistration />} />
           <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
           <Route path="/doctor/chat/:patientId" element={<DoctorChat />} />
+          <Route path="/consultation-history" element={<ConsultationHistory />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

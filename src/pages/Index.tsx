@@ -3,21 +3,55 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { MessageCircle, Video, Phone, Calendar, Send } from "lucide-react";
+import { MessageCircle, Video, Phone, Calendar, Send, History } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 const Index = () => {
   const [searchInput, setSearchInput] = useState("");
   const navigate = useNavigate();
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [showMobileModal, setShowMobileModal] = useState(false);
   
   const handleSymptomSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchInput.trim()) {
-      navigate("/symptoms", { state: { initialSymptom: searchInput } });
+      // Check if mobile number exists in localStorage
+      const savedMobile = localStorage.getItem("mediconsult_mobile");
+      if (!savedMobile) {
+        setShowMobileModal(true);
+        return;
+      }
+      navigate("/symptoms", { 
+        state: { 
+          initialSymptom: searchInput,
+          mobileNumber: savedMobile 
+        } 
+      });
     }
   };
 
   const handleSuggestedSymptom = (symptom: string) => {
-    navigate("/symptoms", { state: { initialSymptom: symptom } });
+    // Check if mobile number exists in localStorage
+    const savedMobile = localStorage.getItem("mediconsult_mobile");
+    if (!savedMobile) {
+      setShowMobileModal(true);
+      return;
+    }
+    navigate("/symptoms", { 
+      state: { 
+        initialSymptom: symptom,
+        mobileNumber: savedMobile 
+      } 
+    });
   };
 
   const suggestedPrompts = [
@@ -27,6 +61,68 @@ const Index = () => {
     "I'm having back pain for the last few days",
     "I feel dizzy and nauseous"
   ];
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Basic mobile number validation
+    const mobileRegex = /^[0-9]{10}$/;
+    if (!mobileRegex.test(mobileNumber)) {
+      toast.error("Please enter a valid 10-digit mobile number");
+      return;
+    }
+
+    setIsLoading(true);
+    
+    // Store mobile number in localStorage
+    localStorage.setItem("mediconsult_mobile", mobileNumber);
+    
+    // Navigate to symptoms page
+    navigate("/symptoms", { 
+      state: { mobileNumber }
+    });
+  };
+
+  const handleViewHistory = () => {
+    const savedMobile = localStorage.getItem("mediconsult_mobile");
+    if (savedMobile) {
+      navigate("/consultation-history", { 
+        state: { mobileNumber: savedMobile }
+      });
+    } else {
+      setShowMobileModal(true);
+    }
+  };
+
+  const handleMobileSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Basic mobile number validation
+    const mobileRegex = /^[0-9]{10}$/;
+    if (!mobileRegex.test(mobileNumber)) {
+      toast.error("Please enter a valid 10-digit mobile number");
+      return;
+    }
+
+    // Store mobile number in localStorage
+    localStorage.setItem("mediconsult_mobile", mobileNumber);
+    setShowMobileModal(false);
+    
+    // If there's a pending symptom, navigate to symptoms page
+    if (searchInput.trim()) {
+      navigate("/symptoms", { 
+        state: { 
+          initialSymptom: searchInput,
+          mobileNumber 
+        } 
+      });
+    } else {
+      // Otherwise navigate to history page
+      navigate("/consultation-history", { 
+        state: { mobileNumber }
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -66,8 +162,56 @@ const Index = () => {
               <line x1="4" x2="20" y1="18" y2="18" />
             </svg>
           </Button>
+          <Button 
+            variant="ghost" 
+            onClick={handleViewHistory}
+            className="flex items-center gap-2"
+          >
+            <History className="h-4 w-4" />
+            View History
+          </Button>
         </div>
       </header>
+
+      {/* Mobile Number Modal */}
+      <Dialog open={showMobileModal} onOpenChange={setShowMobileModal}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Enter Mobile Number</DialogTitle>
+            <DialogDescription>
+              Please enter your mobile number to view your consultation history.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleMobileSubmit} className="space-y-4">
+            <div>
+              <Input
+                type="tel"
+                placeholder="10-digit mobile number"
+                value={mobileNumber}
+                onChange={(e) => setMobileNumber(e.target.value)}
+                className="w-full"
+                maxLength={10}
+                required
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                We'll use this to retrieve your consultation history
+              </p>
+            </div>
+            <div className="flex justify-end gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setShowMobileModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">
+                View History
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* Hero Section */}
       <section className="flex flex-col items-center justify-center flex-grow px-4 py-12 md:py-20 text-center bg-gradient-to-b from-blue-50 to-white">
