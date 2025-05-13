@@ -1,73 +1,222 @@
-# Welcome to your Lovable project
+# MediConsult: Quick Medical Consultations Without Login
 
-## Project info
+MediConsult is a web application designed to provide quick digital medical consultations without requiring users to create an account or log in. This application enables patients to describe their symptoms through a chat-like interface, receive doctor recommendations based on their symptoms, and book consultations with appropriate medical professionals.
 
-**URL**: https://lovable.dev/projects/93be8549-df84-4b3b-ab1d-530423506323
+## Table of Contents
 
-## How can I edit this code?
+- [Overview](#overview)
+- [Features](#features)
+  - [Patient Experience](#patient-experience)
+  - [Doctor Experience](#doctor-experience)
+- [Technical Implementation](#technical-implementation)
+- [Project Structure](#project-structure)
+- [Database Schema](#database-schema)
+- [Getting Started](#getting-started)
+- [Development](#development)
+- [Deployment](#deployment)
 
-There are several ways of editing your application.
+## Overview
 
-**Use Lovable**
+MediConsult streamlines the process of seeking medical advice by eliminating the need for account creation. Users can access healthcare services by simply providing their mobile number, describing their symptoms, and selecting a consultation method that works best for them.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/93be8549-df84-4b3b-ab1d-530423506323) and start prompting.
+The application uses a symptom classification system to match patients with appropriate specialists and provides flexible consultation options including video calls, audio calls, WhatsApp, and in-person visits.
 
-Changes made via Lovable will be committed automatically to this repo.
+## Features
 
-**Use your preferred IDE**
+### Patient Experience
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+#### 1. No-Login Required
+- Users can access the system by just providing their mobile number
+- Session-based identification for tracking consultations
+- Mobile number serves as the primary identifier
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+#### 2. Symptom Description via Chat Interface
+- Interactive chat-like interface to describe health concerns
+- Pre-defined suggested prompts for common symptoms
+- Natural conversation flow to understand symptoms
 
-Follow these steps:
+#### 3. Symptom Classification
+- AI-powered symptom analysis (currently mock data for prototype)
+- Follow-up questions based on initial symptoms
+- Classification of symptoms into medical specialties
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+#### 4. Doctor Recommendations
+- Matching algorithm to suggest appropriate specialists
+- Filters for availability and consultation types
+- Doctor profiles with ratings, experience, and specializations
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+#### 5. Flexible Consultation Booking
+- Multiple consultation types:
+  - Video calls
+  - Audio calls
+  - Chat/messaging
+  - In-person visits
+  - WhatsApp consultations
+- Calendar integration for scheduling
+- Available time slot selection
 
-# Step 3: Install the necessary dependencies.
-npm i
+#### 6. Consultation History
+- View past consultations
+- Access previous prescriptions and medical advice
+- Track upcoming appointments
+- All tied to the mobile number for easy retrieval
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+#### 7. Confirmation System
+- Booking confirmations with details
+- Consultation instructions based on type
+- Session IDs for future reference
+- Email confirmation option
+
+### Doctor Experience
+
+#### 1. Doctor Registration
+- Comprehensive registration form
+- Professional details capture:
+  - Personal information
+  - Specializations
+  - Experience
+  - Qualifications
+  - Areas of expertise
+  - Consultation types offered
+- Profile photo upload
+
+#### 2. Doctor Dashboard
+- View upcoming consultations
+- Manage schedule and availability
+- Patient information access
+- Consultation history
+
+#### 3. Doctor-Patient Communication
+- Dedicated chat interface for each patient
+- Ability to provide consultations through chosen medium
+- Prescription creation capabilities
+
+## Technical Implementation
+
+The application is built using modern web technologies:
+
+- **Frontend**: React with TypeScript
+- **UI Components**: shadcn/ui with Tailwind CSS
+- **Routing**: React Router for navigation
+- **Form Handling**: React Hook Form with Zod validation
+- **State Management**: Local React state with localStorage persistence
+- **Notifications**: Toast notifications using Sonner
+
+## Project Structure
+
+```
+src/
+├── components/         # Reusable UI components
+│   └── ui/             # Base UI components from shadcn/ui
+├── hooks/              # Custom React hooks
+├── lib/                # Utility functions and helpers
+├── pages/              # Application pages
+│   ├── Index.tsx                # Landing page
+│   ├── Symptoms.tsx             # Symptom input and classification
+│   ├── Doctors.tsx              # Doctor recommendations
+│   ├── Booking.tsx              # Consultation booking
+│   ├── Confirmation.tsx         # Booking confirmation
+│   ├── ConsultationHistory.tsx  # Past consultations view
+│   ├── DoctorLogin.tsx          # Doctor login
+│   ├── DoctorRegistration.tsx   # Doctor registration
+│   ├── DoctorDashboard.tsx      # Doctor dashboard
+│   ├── DoctorChat.tsx           # Doctor-patient chat
+│   ├── DoctorProfile.tsx        # Doctor profile management
+│   └── PatientInfo.tsx          # Patient information collection
+├── types/              # TypeScript type definitions
+└── App.tsx             # Main application component with routing
+```
+
+## Database Schema
+
+The application is designed to work with the following database schema:
+
+```sql
+-- Users table
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100),
+  email VARCHAR(255) UNIQUE,
+  phone VARCHAR(20),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Doctors table
+CREATE TABLE doctors (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100),
+  specialization VARCHAR(100),
+  email VARCHAR(255) UNIQUE,
+  phone VARCHAR(20),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Consultation types enum
+CREATE TYPE consultation_type AS ENUM ('audio', 'video', 'chat', 'in_person');
+
+-- Consultations table
+CREATE TABLE consultations (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  doctor_id INTEGER REFERENCES doctors(id) ON DELETE CASCADE,
+  consultation_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  type consultation_type NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Prescriptions table
+CREATE TABLE prescriptions (
+  id SERIAL PRIMARY KEY,
+  consultation_id INTEGER REFERENCES consultations(id) ON DELETE CASCADE,
+  medicine TEXT,
+  instructions TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js (v16 or later)
+- npm or yarn
+
+### Installation
+
+1. Clone the repository
+```
+git clone <repository-url>
+cd quick-doc-consult
+```
+
+2. Install dependencies
+```
+npm install
+```
+
+3. Start the development server
+```
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Development
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The application currently uses mock data for demonstration purposes. In a production environment, you would:
 
-**Use GitHub Codespaces**
+1. Connect to a real database (PostgreSQL recommended)
+2. Implement proper authentication and security
+3. Add actual AI for symptom analysis
+4. Develop a proper backend API
+5. Implement video/audio call functionality
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Deployment
 
-## What technologies are used for this project?
+For deployment to production, build the application using:
 
-This project is built with:
+```
+npm run build
+```
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/93be8549-df84-4b3b-ab1d-530423506323) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+This will create optimized production files in the `dist` directory, which can be served from any static file server or deployed to platforms like Vercel, Netlify, or AWS S3.

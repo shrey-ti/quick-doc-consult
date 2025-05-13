@@ -1,0 +1,43 @@
+-- Users table
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100),
+  email VARCHAR(255) UNIQUE,
+  phone VARCHAR(20),
+  date_of_birth DATE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Doctors table
+CREATE TABLE doctors (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100),
+  specialization VARCHAR(100),
+  email VARCHAR(255) UNIQUE,
+  phone VARCHAR(20),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Consultation types enum
+CREATE TYPE consultation_type AS ENUM ('audio', 'video', 'chat', 'in_person');
+
+-- Consultations table
+CREATE TABLE consultations (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  doctor_id INTEGER REFERENCES doctors(id) ON DELETE CASCADE,
+  consultation_date TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  type consultation_type NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Prescriptions table
+CREATE TABLE prescriptions (
+  id SERIAL PRIMARY KEY,
+  consultation_id INTEGER REFERENCES consultations(id) ON DELETE CASCADE,
+  medicine TEXT,
+  instructions TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
