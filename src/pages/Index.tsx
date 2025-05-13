@@ -13,6 +13,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const Index = () => {
   const [searchInput, setSearchInput] = useState("");
@@ -20,6 +27,12 @@ const Index = () => {
   const [mobileNumber, setMobileNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showMobileModal, setShowMobileModal] = useState(false);
+  
+  // New state for patient information
+  const [age, setAge] = useState("");
+  const [gender, setGender] = useState<"male" | "female" | "other" | undefined>(undefined);
+  const [weight, setWeight] = useState("");
+  const [height, setHeight] = useState("");
   
   // Check if user is logged in
   const isPatientLoggedIn = localStorage.getItem("mediconsult_mobile");
@@ -46,7 +59,13 @@ const Index = () => {
       navigate("/symptoms", { 
         state: { 
           initialSymptom: searchInput,
-          mobileNumber: savedMobile 
+          mobileNumber: savedMobile,
+          patientInfo: {
+            age,
+            gender,
+            weight,
+            height
+          }
         } 
       });
     }
@@ -62,7 +81,13 @@ const Index = () => {
     navigate("/symptoms", { 
       state: { 
         initialSymptom: symptom,
-        mobileNumber: savedMobile 
+        mobileNumber: savedMobile,
+        patientInfo: {
+          age,
+          gender,
+          weight,
+          height
+        }
       } 
     });
   };
@@ -262,6 +287,79 @@ const Index = () => {
 
           {/* Chat-like Interface */}
           <div className="w-full max-w-2xl mx-auto mb-8">
+            {/* Patient Information Fields */}
+            <div className="bg-white rounded-2xl shadow-lg p-6 mb-4">
+              <h3 className="text-lg font-medium mb-4">Basic Patient Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+                <div>
+                  <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">
+                    Age (years)
+                  </label>
+                  <Input
+                    id="age"
+                    type="number"
+                    placeholder="Enter age"
+                    value={age}
+                    onChange={(e) => setAge(e.target.value)}
+                    className="w-full"
+                    min="1"
+                    max="120"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
+                    Gender
+                  </label>
+                  <Select 
+                    value={gender} 
+                    onValueChange={(value) => setGender(value as "male" | "female" | "other")}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div>
+                  <label htmlFor="height" className="block text-sm font-medium text-gray-700 mb-1">
+                    Height (cm)
+                  </label>
+                  <Input
+                    id="height"
+                    type="number"
+                    placeholder="Enter height"
+                    value={height}
+                    onChange={(e) => setHeight(e.target.value)}
+                    className="w-full"
+                    min="1"
+                    max="300"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="weight" className="block text-sm font-medium text-gray-700 mb-1">
+                    Weight (kg)
+                  </label>
+                  <Input
+                    id="weight"
+                    type="number"
+                    placeholder="Enter weight"
+                    value={weight}
+                    onChange={(e) => setWeight(e.target.value)}
+                    className="w-full"
+                    min="1"
+                    max="500"
+                  />
+                </div>
+              </div>
+            </div>
+            
             <div className="bg-white rounded-2xl shadow-lg p-6 mb-4">
               <div className="flex items-start space-x-3 mb-4">
                 <div className="bg-blue-100 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0">

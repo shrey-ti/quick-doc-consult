@@ -7,24 +7,6 @@ import {
   Card, 
   CardContent
 } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
 import { MessageCircle, Send, Loader2 } from "lucide-react";
 
@@ -39,6 +21,12 @@ interface Message {
 interface LocationState {
   initialSymptom?: string;
   mobileNumber: string;
+  patientInfo?: {
+    age: string;
+    gender?: "male" | "female" | "other";
+    weight: string;
+    height: string;
+  };
 }
 
 // List of specializations for the doctor recommendations
@@ -65,28 +53,10 @@ const commonSymptoms = [
   "Back Pain", "Stomach Pain", "Fatigue", "Dizziness"
 ];
 
-// Define a form schema for patient information
-const patientInfoSchema = z.object({
-  age: z.string().refine((val) => !isNaN(parseInt(val)) && parseInt(val) > 0 && parseInt(val) < 120, {
-    message: "Please enter a valid age between 1 and 120",
-  }),
-  gender: z.enum(["male", "female", "other"], {
-    required_error: "Please select a gender",
-  }),
-  height: z.string().refine((val) => val === "" || (!isNaN(parseInt(val)) && parseInt(val) > 0 && parseInt(val) < 300), {
-    message: "Please enter a valid height in centimeters",
-  }),
-  weight: z.string().refine((val) => val === "" || (!isNaN(parseInt(val)) && parseInt(val) > 0 && parseInt(val) < 500), {
-    message: "Please enter a valid weight in kilograms",
-  }),
-});
-
-type PatientInfoValues = z.infer<typeof patientInfoSchema>;
-
 const Symptoms = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { initialSymptom, mobileNumber } = (location.state as LocationState) || {};
+  const { initialSymptom, mobileNumber, patientInfo } = (location.state as LocationState) || {};
   const [inputValue, setInputValue] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
@@ -107,19 +77,6 @@ const Symptoms = () => {
     initialSymptomAnalyzed: false,
     conversationComplete: false,
     finalSpecialist: null
-  });
-
-  const [showPatientInfoForm, setShowPatientInfoForm] = useState(false);
-  
-  // Initialize form
-  const patientInfoForm = useForm<PatientInfoValues>({
-    resolver: zodResolver(patientInfoSchema),
-    defaultValues: {
-      age: "",
-      gender: undefined,
-      height: "",
-      weight: "",
-    },
   });
 
   // Get API key from environment
@@ -309,7 +266,6 @@ const Symptoms = () => {
       return `
 You are a medical assistant helping users identify which doctor specialist they should consult based on their symptoms. 
 I need you to analyze symptoms and ask 2-4 relevant follow-up questions to determine the appropriate medical specialist.
-
 Initial symptom from the patient: "${userMessages[0].text}"
 
 Based on this initial symptom, ask ONE follow-up question to better understand the patient's condition. 
@@ -397,34 +353,26 @@ Format your response as: "Based on your responses, you should consult: [Speciali
     if (chatContext.finalSpecialist || specialist) {
       const recommendedSpecialist = specialist || chatContext.finalSpecialist;
       
-      // Show patient info form instead of redirecting immediately
-      setShowPatientInfoForm(true);
+      // Extract patient information and navigate directly to doctors page
+      const patientData = {
+        symptoms,
+        recommendedSpecialties: recommendedSpecialist ? [recommendedSpecialist] : specializations.slice(0, 1),
+        mobileNumber,
+        age: patientInfo?.age || "",
+        gender: patientInfo?.gender || "other",
+        height: patientInfo?.height || "",
+        weight: patientInfo?.weight || ""
+      };
+
+      // Navigate to the doctors page with the recommendation
+      navigate("/doctors", { 
+        state: { patientData } 
+      });
+      toast.success("Matching you with appropriate doctors");
     } else {
       // Fallback if no specialist was determined
       toast.error("Could not determine an appropriate specialist. Please try again.");
     }
-  };
-
-  // New function to handle patient info form submission
-  const handlePatientInfoSubmit = (values: PatientInfoValues) => {
-    const recommendedSpecialist = chatContext.finalSpecialist || "";
-    
-    // Extract patient information
-    const patientData = {
-      symptoms,
-      recommendedSpecialties: recommendedSpecialist ? [recommendedSpecialist] : specializations.slice(0, 1),
-      mobileNumber,
-      age: values.age,
-      gender: values.gender,
-      height: values.height,
-      weight: values.weight
-    };
-
-    // Navigate to the doctors page with the recommendation
-    navigate("/doctors", { 
-      state: { patientData } 
-    });
-    toast.success("Information submitted successfully");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -453,298 +401,120 @@ Format your response as: "Based on your responses, you should consult: [Speciali
       </header>
 
       <main className="container mx-auto px-4 py-8 max-w-3xl">
-        {!showPatientInfoForm ? (
-          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <h1 className="text-2xl font-bold mb-6 text-center">Describe Your Symptoms</h1>
-            
-            <div className="mb-8 flex items-center justify-center">
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">1</div>
-                <div className="border-t-2 border-primary w-16 mx-1"></div>
-                <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white">2</div>
-                <div className="border-t-2 border-gray-300 w-16 mx-1"></div>
-                <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white">3</div>
-              </div>
+        <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
+          <h1 className="text-2xl font-bold mb-6 text-center">Describe Your Symptoms</h1>
+          
+          <div className="mb-8 flex items-center justify-center">
+            <div className="flex items-center">
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">1</div>
+              <div className="border-t-2 border-primary w-16 mx-1"></div>
+              <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white">2</div>
+              <div className="border-t-2 border-gray-300 w-16 mx-1"></div>
+              <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white">3</div>
             </div>
-            
-            {/* Chat Interface */}
-            <div className="h-[500px] flex flex-col">
-              <div className="flex-1 overflow-y-auto mb-4 space-y-4 p-4">
-                {messages.map((message) => (
+          </div>
+          
+          {/* Chat Interface */}
+          <div className="h-[500px] flex flex-col">
+            <div className="flex-1 overflow-y-auto mb-4 space-y-4 p-4">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+                >
                   <div
-                    key={message.id}
-                    className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}
+                    className={`max-w-[80%] rounded-lg p-3 ${
+                      message.sender === "user"
+                        ? "bg-primary text-white"
+                        : "bg-gray-100 text-gray-800"
+                    }`}
                   >
-                    <div
-                      className={`max-w-[80%] rounded-lg p-3 ${
-                        message.sender === "user"
-                          ? "bg-primary text-white"
-                          : "bg-gray-100 text-gray-800"
-                      }`}
-                    >
-                      {message.text}
-                    </div>
+                    {message.text}
                   </div>
-                ))}
-                {isTyping && (
-                  <div className="flex justify-start">
-                    <div className="bg-gray-100 rounded-lg p-3">
-                      <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
-                    </div>
+                </div>
+              ))}
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="bg-gray-100 rounded-lg p-3">
+                    <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
                   </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              <form onSubmit={handleSubmit} className="flex gap-2">
-                <Input
-                  type="text"
-                  placeholder="Type your symptoms..."
-                  className="flex-1"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                />
-                <Button type="submit" disabled={!inputValue.trim() || isTyping}>
-                  <Send className="h-4 w-4" />
-                </Button>
-              </form>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
             </div>
 
-            <div className="flex justify-start items-center pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={() => navigate("/")}
-              >
-                Back
+            <form onSubmit={handleSubmit} className="flex gap-2">
+              <Input
+                type="text"
+                placeholder="Type your symptoms..."
+                className="flex-1"
+                value={inputValue}
+                onChange={(e) => setInputValue(e.target.value)}
+              />
+              <Button type="submit" disabled={!inputValue.trim() || isTyping}>
+                <Send className="h-4 w-4" />
               </Button>
-            </div>
+            </form>
+          </div>
 
-            {/* Add this debug button to the JSX, right before the Tips Section div */}
-            <div className="mt-4 border-t pt-4">
-              <div className="flex items-center justify-between">
+          <div className="flex justify-start items-center pt-4">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => navigate("/")}
+            >
+              Back
+            </Button>
+          </div>
+
+          {/* Debug section */}
+          <div className="mt-4 border-t pt-4">
+            <div className="flex items-center justify-between">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setDebugMode(!debugMode)}
+                className="text-xs"
+              >
+                {debugMode ? "Hide Debug Info" : "Show Debug Info"}
+              </Button>
+              
+              {debugMode && (
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => setDebugMode(!debugMode)}
+                  onClick={() => {
+                    // Reload the page to reset the chat
+                    window.location.reload();
+                  }}
                   className="text-xs"
                 >
-                  {debugMode ? "Hide Debug Info" : "Show Debug Info"}
+                  Reset Chat
                 </Button>
-                
-                {debugMode && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      // Reload the page to reset the chat
-                      window.location.reload();
-                    }}
-                    className="text-xs"
-                  >
-                    Reset Chat
-                  </Button>
-                )}
-              </div>
-              
-              {debugMode && (
-                <div className="mt-2 p-2 bg-gray-100 rounded text-xs font-mono">
-                  <p>API Key configured: {GEMINI_API_KEY ? "Yes" : "No"}</p>
-                  <p>API Key value: {GEMINI_API_KEY ? `${GEMINI_API_KEY.substring(0, 5)}...${GEMINI_API_KEY.substring(GEMINI_API_KEY.length - 3)}` : "Not set"}</p>
-                  <p>Follow-up count: {chatContext.followUpCount}</p>
-                  <p>Conversation complete: {chatContext.conversationComplete ? "Yes" : "No"}</p>
-                  <p>Final specialist: {chatContext.finalSpecialist || "None yet"}</p>
-                </div>
               )}
             </div>
-          </div>
-        ) : (
-          <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-            <h1 className="text-2xl font-bold mb-6 text-center">Patient Information</h1>
             
-            <div className="mb-8 flex items-center justify-center">
-              <div className="flex items-center">
-                <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white">✓</div>
-                <div className="border-t-2 border-green-500 w-16 mx-1"></div>
-                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">2</div>
-                <div className="border-t-2 border-gray-300 w-16 mx-1"></div>
-                <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white">3</div>
-              </div>
-            </div>
-            
-            {/* Symptom Summary */}
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-2">Your Symptoms</h2>
-              <div className="flex flex-wrap gap-2">
-                {symptoms.map((symptom, index) => (
-                  <Badge 
-                    key={index} 
-                    variant="secondary" 
-                    className="px-3 py-1 text-base bg-blue-50"
-                  >
-                    {symptom}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-            
-            {/* Specialist Recommendation */}
-            {chatContext.finalSpecialist && (
-              <div className="mb-6 p-4 bg-blue-50 rounded-lg">
-                <h2 className="text-lg font-semibold mb-2">Recommended Specialist</h2>
-                <p className="text-primary font-medium">{chatContext.finalSpecialist}</p>
+            {debugMode && (
+              <div className="mt-2 p-2 bg-gray-100 rounded text-xs font-mono">
+                <p>API Key configured: {GEMINI_API_KEY ? "Yes" : "No"}</p>
+                <p>API Key value: {GEMINI_API_KEY ? `${GEMINI_API_KEY.substring(0, 5)}...${GEMINI_API_KEY.substring(GEMINI_API_KEY.length - 3)}` : "Not set"}</p>
+                <p>Follow-up count: {chatContext.followUpCount}</p>
+                <p>Conversation complete: {chatContext.conversationComplete ? "Yes" : "No"}</p>
+                <p>Final specialist: {chatContext.finalSpecialist || "None yet"}</p>
+                {patientInfo && (
+                  <>
+                    <p>Patient Age: {patientInfo.age || "Not provided"}</p>
+                    <p>Patient Gender: {patientInfo.gender || "Not provided"}</p>
+                    <p>Patient Height: {patientInfo.height || "Not provided"}</p>
+                    <p>Patient Weight: {patientInfo.weight || "Not provided"}</p>
+                  </>
+                )}
               </div>
             )}
-            
-            {/* Patient Information Form */}
-            <Form {...patientInfoForm}>
-              <form onSubmit={patientInfoForm.handleSubmit(handlePatientInfoSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={patientInfoForm.control}
-                    name="age"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Age (years)<span className="text-red-500">*</span></FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="Enter your age"
-                            type="number"
-                            min="1"
-                            max="120"
-                            required
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={patientInfoForm.control}
-                    name="gender"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Gender<span className="text-red-500">*</span></FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select gender" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="male">Male</SelectItem>
-                            <SelectItem value="female">Female</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={patientInfoForm.control}
-                    name="height"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Height (cm)</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="Enter height in cm"
-                            type="number"
-                            min="1"
-                            max="300"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={patientInfoForm.control}
-                    name="weight"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Weight (kg)</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="Enter weight in kg"
-                            type="number"
-                            min="1"
-                            max="500"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                
-                <div className="pt-4 flex justify-between">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    onClick={() => setShowPatientInfoForm(false)}
-                  >
-                    Back
-                  </Button>
-                  <Button 
-                    type="submit"
-                  >
-                    Continue
-                  </Button>
-                </div>
-              </form>
-            </Form>
-            
-            {/* Debug section */}
-            <div className="mt-4 border-t pt-4">
-              <div className="flex items-center justify-between">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setDebugMode(!debugMode)}
-                  className="text-xs"
-                >
-                  {debugMode ? "Hide Debug Info" : "Show Debug Info"}
-                </Button>
-                
-                {debugMode && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      // Reload the page to reset the chat
-                      window.location.reload();
-                    }}
-                    className="text-xs"
-                  >
-                    Reset Chat
-                  </Button>
-                )}
-              </div>
-              
-              {debugMode && (
-                <div className="mt-2 p-2 bg-gray-100 rounded text-xs font-mono">
-                  <p>API Key configured: {GEMINI_API_KEY ? "Yes" : "No"}</p>
-                  <p>API Key value: {GEMINI_API_KEY ? `${GEMINI_API_KEY.substring(0, 5)}...${GEMINI_API_KEY.substring(GEMINI_API_KEY.length - 3)}` : "Not set"}</p>
-                  <p>Follow-up count: {chatContext.followUpCount}</p>
-                  <p>Conversation complete: {chatContext.conversationComplete ? "Yes" : "No"}</p>
-                  <p>Final specialist: {chatContext.finalSpecialist || "None yet"}</p>
-                </div>
-              )}
-            </div>
           </div>
-        )}
+        </div>
         
         {/* Tips Section */}
         <div className="bg-blue-50 rounded-xl p-6">
