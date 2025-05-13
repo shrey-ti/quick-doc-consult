@@ -295,8 +295,9 @@ const Symptoms = () => {
       
       // First response after detecting the flow
       if (questionIndex === 0) {
-        setQuestionIndex(1); // Move to first question for next response
-        return flow.initial;
+        setQuestionIndex(1); // Move to first question
+        // Return both the initial message and first question
+        return `${flow.initial}\n\n${flow.followUps[0]}`;
       } 
       // Follow-up questions
       else if (questionIndex <= flow.followUps.length) {
@@ -313,14 +314,13 @@ const Symptoms = () => {
     }
     
     // If no active flow was found in the first message, use default behavior
-    // This case should mostly happen when messages.length <= 2
-    // Check if the first message matches any flow
     if (messages.length <= 2) {
       const matchedFlow = findMatchingFlow(symptom);
       if (matchedFlow) {
         setCurrentFlow(matchedFlow);
-        setQuestionIndex(1); // Set to 1 because we're returning the initial response now
-        return conversationFlows[matchedFlow].initial;
+        setQuestionIndex(1); // Set to 1 because we're returning both initial and first question
+        const flow = conversationFlows[matchedFlow];
+        return `${flow.initial}\n\n${flow.followUps[0]}`;
       }
     }
 
@@ -377,8 +377,6 @@ const Symptoms = () => {
               <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white">2</div>
               <div className="border-t-2 border-gray-300 w-12"></div>
               <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white">3</div>
-              <div className="border-t-2 border-gray-300 w-12"></div>
-              <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white">4</div>
             </div>
           </div>
           
@@ -425,19 +423,13 @@ const Symptoms = () => {
             </form>
           </div>
 
-          <div className="flex justify-between items-center pt-4">
+          <div className="flex justify-start items-center pt-4">
             <Button 
               type="button" 
               variant="outline" 
               onClick={() => navigate("/")}
             >
               Back
-            </Button>
-            <Button 
-              onClick={handleContinue}
-              disabled={symptoms.length === 0}
-            >
-              Continue
             </Button>
           </div>
         </div>

@@ -160,11 +160,9 @@ const Doctors = () => {
             <div className="flex space-x-2">
               <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white">✓</div>
               <div className="border-t-2 border-green-500 w-12"></div>
-              <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white">✓</div>
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">2</div>
               <div className="border-t-2 border-primary w-12"></div>
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">3</div>
-              <div className="border-t-2 border-gray-300 w-12"></div>
-              <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white">4</div>
+              <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white">3</div>
             </div>
           </div>
 
@@ -182,11 +180,12 @@ const Doctors = () => {
               </div>
             </div>
             <h2 className="text-sm font-medium text-gray-600 mb-2">Reported Symptoms:</h2>
-            <div className="flex flex-wrap gap-2">
+            <div className="space-y-1">
               {patientData.symptoms.map((symptom: string, index: number) => (
-                <Badge key={index} variant="secondary" className="capitalize">
-                  {symptom}
-                </Badge>
+                <div key={index} className="flex items-start">
+                  <span className="text-gray-600 mr-2 min-w-[1.5rem]">{index + 1}.</span>
+                  <p className="text-gray-900">{symptom}</p>
+                </div>
               ))}
             </div>
           </div>

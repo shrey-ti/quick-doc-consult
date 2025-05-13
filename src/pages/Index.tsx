@@ -139,6 +139,13 @@ const Index = () => {
             <Button 
               variant="outline" 
               className="border-primary text-primary hover:bg-primary hover:text-white"
+              onClick={() => navigate("/consultation-history")}
+            >
+              View History
+            </Button>
+            <Button 
+              variant="outline" 
+              className="border-primary text-primary hover:bg-primary hover:text-white"
               onClick={() => navigate("/doctor-login")}
             >
               For Doctors
