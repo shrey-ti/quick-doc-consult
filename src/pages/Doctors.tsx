@@ -313,12 +313,12 @@ const Doctors = () => {
           <h1 className="text-2xl font-bold mb-6 text-center">Recommended Doctors</h1>
           
           <div className="mb-8 flex items-center justify-center">
-            <div className="flex space-x-2">
-              <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center text-white">✓</div>
-              <div className="border-t-2 border-green-500 w-12"></div>
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">2</div>
-              <div className="border-t-2 border-primary w-12"></div>
-              <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white">3</div>
+            <div className="flex items-center">
+              <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white">✓</div>
+              <div className="border-t-2 border-green-500 w-16 mx-1"></div>
+              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white">2</div>
+              <div className="border-t-2 border-primary w-16 mx-1"></div>
+              <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center text-white">3</div>
             </div>
           </div>
 
