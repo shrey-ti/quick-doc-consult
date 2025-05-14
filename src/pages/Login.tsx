@@ -28,7 +28,9 @@ const Login = () => {
   const [doctorPhone, setDoctorPhone] = useState("");
   const [activeTab, setActiveTab] = useState("patient");
   const [isLoading, setIsLoading] = useState(false);
+  const [isDoctorLoading, setIsDoctorLoading] = useState(false);
   const [loginMessage, setLoginMessage] = useState<{ type: "success" | "info" | "error"; message: string } | null>(null);
+  const [doctorLoginMessage, setDoctorLoginMessage] = useState<{ type: "success" | "info" | "error"; message: string } | null>(null);
   const navigate = useNavigate();
 
   const handlePatientLogin = async (e: React.FormEvent) => {
@@ -74,7 +76,7 @@ const Login = () => {
     }
   };
 
-  const handleDoctorLogin = (e: React.FormEvent) => {
+  const handleDoctorLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic phone validation
@@ -84,21 +86,34 @@ const Login = () => {
       return;
     }
 
-    // Get stored doctors from localStorage (mimicking database)
-    const storedDoctors = JSON.parse(localStorage.getItem("doctors") || "[]");
-    
-    // Check if doctor exists
-    const doctorExists = storedDoctors.some((doc: Doctor) => doc.phone === doctorPhone);
-
-    if (doctorExists) {
-      // Store logged in doctor
-      localStorage.setItem("currentDoctor", doctorPhone);
-      toast.success("Doctor login successful");
-      navigate("/doctor/dashboard");
-    } else {
-      // Redirect to registration
-      toast.info("No account found. Please register first.");
-      navigate("/doctor-registration");
+    try {
+      setIsDoctorLoading(true);
+      setDoctorLoginMessage(null);
+      
+      // Call backend to check if doctor exists
+      const response = await authenticateUser(doctorPhone, "doctor");
+      
+      if (response.exists) {
+        // Doctor exists, store in localStorage and login
+        localStorage.setItem("currentDoctor", doctorPhone);
+        setDoctorLoginMessage({ type: "success", message: "Welcome back, Doctor! You've been logged in successfully." });
+        toast.success("Doctor login successful");
+        
+        // Delay navigation slightly to show the success message
+        setTimeout(() => {
+          navigate("/");
+        }, 1500);
+      } else {
+        // Doctor doesn't exist, show error message
+        setDoctorLoginMessage({ type: "error", message: "No doctor account found with this phone number. Please register first." });
+        toast.error("No account found. Please register first.");
+      }
+    } catch (error) {
+      console.error("Doctor login error:", error);
+      toast.error("Failed to authenticate. Please try again.");
+      setDoctorLoginMessage({ type: "error", message: "Authentication failed. Please try again." });
+    } finally {
+      setIsDoctorLoading(false);
     }
   };
 
@@ -176,10 +191,10 @@ const Login = () => {
                   <p className="text-sm text-gray-600">Phone: {isDoctorLoggedIn}</p>
                 </div>
                 <Button 
-                  onClick={() => navigate("/doctor/dashboard")}
+                  onClick={() => navigate("/")}
                   className="w-full"
                 >
-                  Go to Dashboard
+                  Go to Home
                 </Button>
                 <Button 
                   variant="outline" 
@@ -224,6 +239,13 @@ const Login = () => {
                 </TabsContent>
                 
                 <TabsContent value="doctor">
+                  {doctorLoginMessage && (
+                    <Alert className={`mb-4 ${doctorLoginMessage.type === 'success' ? 'bg-green-50 text-green-800 border-green-200' : 
+                      doctorLoginMessage.type === 'info' ? 'bg-blue-50 text-blue-800 border-blue-200' : 
+                      'bg-red-50 text-red-800 border-red-200'}`}>
+                      <AlertDescription>{doctorLoginMessage.message}</AlertDescription>
+                    </Alert>
+                  )}
                   <form onSubmit={handleDoctorLogin} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="doctor-phone">Phone Number</Label>
@@ -235,10 +257,10 @@ const Login = () => {
                         onChange={(e) => setDoctorPhone(e.target.value)}
                         required
                       />
-                      <p className="text-xs text-gray-500">If you don't have an account, you'll be redirected to register</p>
+                      <p className="text-xs text-gray-500">If you don't have an account, you'll need to register first.</p>
                     </div>
-                    <Button type="submit" className="w-full">
-                      Login as Doctor
+                    <Button type="submit" className="w-full" disabled={isDoctorLoading}>
+                      {isDoctorLoading ? "Processing..." : "Login as Doctor"}
                     </Button>
                     <div className="text-center mt-2">
                       <Button 
