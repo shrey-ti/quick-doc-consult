@@ -267,8 +267,12 @@ const Symptoms = () => {
 You are a medical assistant helping users identify which doctor specialist they should consult based on their symptoms. 
 I need you to analyze symptoms and ask 2-4 relevant follow-up questions to determine the appropriate medical specialist.
 Initial symptom from the patient: "${userMessages[0].text}"
+Age of the patient: ${patientInfo?.age || "Not provided"}
+Gender of the patient: ${patientInfo?.gender || "Not provided"}
+Height of the patient: ${patientInfo?.height || "Not provided"}
+Weight of the patient: ${patientInfo?.weight || "Not provided"}
 
-Based on this initial symptom, ask ONE follow-up question to better understand the patient's condition. 
+Based on this initial symptom and other patient information (use age, gender, height, weight as context to effectively determine the appropriate specialist), ask ONE follow-up question to better understand the patient's condition. 
 Keep your response brief and focused on a single question.
 `;
     } 
