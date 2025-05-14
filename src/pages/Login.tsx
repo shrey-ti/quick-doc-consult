@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { LogOut, User, UserCog } from "lucide-react";
+import { authenticateUser } from "@/lib/api";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Define a type for the doctor object
 interface Doctor {
@@ -25,9 +27,11 @@ const Login = () => {
   const [patientPhone, setPatientPhone] = useState("");
   const [doctorPhone, setDoctorPhone] = useState("");
   const [activeTab, setActiveTab] = useState("patient");
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginMessage, setLoginMessage] = useState<{ type: "success" | "info" | "error"; message: string } | null>(null);
   const navigate = useNavigate();
 
-  const handlePatientLogin = (e: React.FormEvent) => {
+  const handlePatientLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic phone validation
@@ -37,10 +41,37 @@ const Login = () => {
       return;
     }
 
-    // Store in localStorage (in real app, would check against database)
-    localStorage.setItem("mediconsult_mobile", patientPhone);
-    toast.success("Logged in successfully");
-    navigate("/");
+    try {
+      setIsLoading(true);
+      setLoginMessage(null);
+      
+      // Call backend to check if patient exists or needs to be created
+      const response = await authenticateUser(patientPhone, "patient");
+      
+      // Store in localStorage 
+      localStorage.setItem("mediconsult_mobile", patientPhone);
+      
+      if (response.exists) {
+        // Existing patient
+        setLoginMessage({ type: "success", message: "Welcome back! You've been logged in successfully." });
+        toast.success("Logged in successfully");
+      } else {
+        // New patient
+        setLoginMessage({ type: "info", message: "You've been registered as a new patient. Welcome to MediConsult!" });
+        toast.success("Successfully registered as a new patient");
+      }
+      
+      // Delay navigation slightly to show the success message
+      setTimeout(() => {
+        navigate("/");
+      }, 1500);
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("Failed to authenticate. Please try again.");
+      setLoginMessage({ type: "error", message: "Authentication failed. Please try again." });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDoctorLogin = (e: React.FormEvent) => {
@@ -166,6 +197,13 @@ const Login = () => {
                 </TabsList>
                 
                 <TabsContent value="patient">
+                  {loginMessage && (
+                    <Alert className={`mb-4 ${loginMessage.type === 'success' ? 'bg-green-50 text-green-800 border-green-200' : 
+                      loginMessage.type === 'info' ? 'bg-blue-50 text-blue-800 border-blue-200' : 
+                      'bg-red-50 text-red-800 border-red-200'}`}>
+                      <AlertDescription>{loginMessage.message}</AlertDescription>
+                    </Alert>
+                  )}
                   <form onSubmit={handlePatientLogin} className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="patient-phone">Phone Number</Label>
@@ -177,10 +215,10 @@ const Login = () => {
                         onChange={(e) => setPatientPhone(e.target.value)}
                         required
                       />
-                      <p className="text-xs text-gray-500">We'll use this to identify you in our system</p>
+                      <p className="text-xs text-gray-500">New to MediConsult? You'll be registered automatically.</p>
                     </div>
-                    <Button type="submit" className="w-full">
-                      Login as Patient
+                    <Button type="submit" className="w-full" disabled={isLoading}>
+                      {isLoading ? "Processing..." : "Login as Patient"}
                     </Button>
                   </form>
                 </TabsContent>
