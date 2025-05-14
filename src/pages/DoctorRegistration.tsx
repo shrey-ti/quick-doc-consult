@@ -26,154 +26,73 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-// Define the form schema
+// Define the form schema based on the database schema
 const doctorFormSchema = z.object({
-  fullName: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
-  phone: z.string().min(10, {
+  phone_number: z.string().min(10, {
     message: "Phone number must be at least 10 digits.",
   }),
-  specialization: z.string({
+  name: z.string().min(2, {
+    message: "Name must be at least 2 characters.",
+  }),
+  category_id: z.number({
     required_error: "Please select a specialization.",
   }),
-  experience: z.string({
-    required_error: "Please enter your years of experience.",
+  photo_url: z.any().optional(),
+  experience_years: z.string().transform((val) => parseInt(val, 10)),
+  about: z.string().min(20, {
+    message: "About section must be at least 20 characters.",
   }),
+  consultation_types: z.array(z.object({
+    type: z.enum(['video', 'audio', 'chat', 'in_person', 'whatsapp']),
+    price: z.string().transform((val) => parseFloat(val)),
+    selected: z.boolean()
+  })),
+  // Additional fields that might not be in schema but are useful for UI
+  email: z.string().email({
+    message: "Please enter a valid email address.",
+  }).optional(),
   degree: z.string().min(2, {
     message: "Degree must be at least 2 characters.",
-  }),
+  }).optional(),
   institution: z.string().min(2, {
     message: "Institution name must be at least 2 characters.",
-  }),
+  }).optional(),
   graduationYear: z.string().regex(/^\d{4}$/, {
     message: "Please enter a valid graduation year (e.g., 2020).",
-  }),
-  bio: z.string().min(20, {
-    message: "Bio must be at least 20 characters.",
-  }),
-  consultationTypes: z.array(z.string()).min(1, {
-    message: "Please select at least one consultation type.",
-  }),
-  expertiseAreas: z.array(z.string()).min(1, {
-    message: "Please select at least one area of expertise.",
-  }),
+  }).optional(),
   licenseNumber: z.string().min(4, {
     message: "License number must be at least 4 characters.",
-  }),
-  profilePhoto: z.any().optional(),
+  }).optional(),
 });
 
 type DoctorFormValues = z.infer<typeof doctorFormSchema>;
 
-// Available specializations
-const specializations = [
-  "General Physician / Family Medicine",
-  "Dermatologist",
-  "Pediatrician",
-  "Gynecologist",
-  "Psychiatrist / Psychologist",
-  "ENT Specialist",
-  "Cardiologist",
-  "Gastroenterologist",
-  "Orthopedic",
-  "Neurologist",
-  "Pulmonologist",
-  "Urologist",
-  "Endocrinologist",
-  "Ophthalmologist",
-  "Dentist"
+// Doctor categories mapping to match category_id in the database
+const doctorCategories = [
+  { id: 1, label: "General Physician / Family Medicine" },
+  { id: 2, label: "Dermatologist" },
+  { id: 3, label: "Pediatrician" },
+  { id: 4, label: "Gynecologist" },
+  { id: 5, label: "Psychiatrist / Psychologist" },
+  { id: 6, label: "ENT Specialist" },
+  { id: 7, label: "Cardiologist" },
+  { id: 8, label: "Gastroenterologist" },
+  { id: 9, label: "Orthopedic" },
+  { id: 10, label: "Neurologist" },
+  { id: 11, label: "Pulmonologist" },
+  { id: 12, label: "Urologist" },
+  { id: 13, label: "Endocrinologist" },
+  { id: 14, label: "Ophthalmologist" },
+  { id: 15, label: "Dentist" }
 ];
 
-// Disease categories
-const diseaseCategories = [
-  { 
-    id: "general_physician", 
-    label: "General Physician / Family Medicine", 
-    symptoms: ["Common colds", "fever", "fatigue", "minor infections", "headache"] 
-  },
-  { 
-    id: "dermatologist", 
-    label: "Dermatologist", 
-    symptoms: ["Acne", "rashes", "skin infections", "hair loss", "fungal issues"] 
-  },
-  { 
-    id: "pediatrician", 
-    label: "Pediatrician", 
-    symptoms: ["Child-specific issues", "cough", "growth", "infections in kids"] 
-  },
-  { 
-    id: "gynecologist", 
-    label: "Gynecologist", 
-    symptoms: ["Menstrual issues", "pregnancy", "PCOS", "fertility"] 
-  },
-  { 
-    id: "psychiatrist", 
-    label: "Psychiatrist / Psychologist", 
-    symptoms: ["Anxiety", "depression", "sleep problems", "behavioral concerns"] 
-  },
-  { 
-    id: "ent", 
-    label: "ENT Specialist", 
-    symptoms: ["Earache", "sore throat", "sinus", "dizziness"] 
-  },
-  { 
-    id: "cardiologist", 
-    label: "Cardiologist", 
-    symptoms: ["Chest pain", "palpitations", "high BP", "heart health"] 
-  },
-  { 
-    id: "gastroenterologist", 
-    label: "Gastroenterologist", 
-    symptoms: ["Indigestion", "stomach pain", "acid reflux", "IBS"] 
-  },
-  { 
-    id: "orthopedic", 
-    label: "Orthopedic", 
-    symptoms: ["Joint pain", "back pain", "fractures", "arthritis"] 
-  },
-  { 
-    id: "neurologist", 
-    label: "Neurologist", 
-    symptoms: ["Seizures", "migraines", "numbness", "memory issues"] 
-  },
-  { 
-    id: "pulmonologist", 
-    label: "Pulmonologist", 
-    symptoms: ["Breathlessness", "cough", "asthma", "post-COVID care"] 
-  },
-  { 
-    id: "urologist", 
-    label: "Urologist", 
-    symptoms: ["Urination issues", "UTIs", "kidney pain", "male fertility"] 
-  },
-  { 
-    id: "endocrinologist", 
-    label: "Endocrinologist", 
-    symptoms: ["Diabetes", "thyroid issues", "hormonal disorders"] 
-  },
-  { 
-    id: "ophthalmologist", 
-    label: "Ophthalmologist", 
-    symptoms: ["Eye strain", "blurry vision", "infections", "injury"] 
-  },
-  { 
-    id: "dentist", 
-    label: "Dentist", 
-    symptoms: ["Toothache", "gum swelling", "cavity", "braces"] 
-  }
-];
-
-// Consultation types
+// Consultation types as per enum in database schema
 const consultationTypes = [
-  { id: "video", label: "Video Call" },
-  { id: "audio", label: "Audio Call" },
-  { id: "chat", label: "Chat/Messaging" },
-  { id: "inperson", label: "In-person Visit" },
-  { id: "whatsapp", label: "WhatsApp Consultation" },
+  { id: "video", label: "Video Call", value: "video" },
+  { id: "audio", label: "Audio Call", value: "audio" },
+  { id: "chat", label: "Chat/Messaging", value: "chat" },
+  { id: "in_person", label: "In-person Visit", value: "in_person" },
+  { id: "whatsapp", label: "WhatsApp Consultation", value: "whatsapp" },
 ];
 
 const DoctorRegistration = () => {
@@ -184,18 +103,21 @@ const DoctorRegistration = () => {
   const form = useForm<DoctorFormValues>({
     resolver: zodResolver(doctorFormSchema),
     defaultValues: {
-      fullName: "",
+      name: "",
+      phone_number: "",
+      category_id: undefined,
+      experience_years: "",
+      about: "",
       email: "",
-      phone: "",
-      specialization: "",
-      experience: "",
       degree: "",
       institution: "",
       graduationYear: "",
-      bio: "",
-      consultationTypes: [],
-      expertiseAreas: [],
       licenseNumber: "",
+      consultation_types: consultationTypes.map(type => ({
+        type: type.value as any,
+        price: "500",
+        selected: false
+      }))
     },
   });
 
@@ -215,25 +137,46 @@ const DoctorRegistration = () => {
     setIsSubmitting(true);
     
     try {
-      // Get existing doctors from localStorage
-      const existingDoctors = JSON.parse(localStorage.getItem("doctors") || "[]");
-      console.log("Existing doctors:", existingDoctors); // Debug log
-      
-      // Add new doctor to the array
-      const newDoctor = {
-        ...data,
-        id: Date.now(), // Simple way to generate unique ID
-        registrationDate: new Date().toISOString()
+      // Prepare data according to the database schema
+      const doctorData = {
+        phone_number: data.phone_number,
+        name: data.name,
+        category_id: data.category_id,
+        photo_url: selectedPhoto,
+        experience_years: data.experience_years,
+        consultation_count: 0, // Default for new doctors
+        about: data.about,
+        created_at: new Date().toISOString(),
+        // Additional fields for UI display
+        email: data.email,
+        degree: data.degree,
+        institution: data.institution,
+        graduationYear: data.graduationYear,
+        licenseNumber: data.licenseNumber,
       };
-      console.log("New doctor data:", newDoctor); // Debug log
       
-      // Save updated doctors array
+      // Filter selected consultation types and format them for the database
+      const selectedConsultationTypes = data.consultation_types
+        .filter(type => type.selected)
+        .map(type => ({
+          doctor_phone: data.phone_number,
+          consultation_type: type.type,
+          price: type.price
+        }));
+      
+      // For development/demo purposes, store in localStorage
+      // In production, this would be a backend API call
+      const existingDoctors = JSON.parse(localStorage.getItem("doctors") || "[]");
+      const newDoctor = {
+        ...doctorData,
+        consultation_types: selectedConsultationTypes
+      };
       const updatedDoctors = [...existingDoctors, newDoctor];
       localStorage.setItem("doctors", JSON.stringify(updatedDoctors));
-      console.log("Updated doctors array:", updatedDoctors); // Debug log
       
-      // Store current doctor's mobile for immediate login
-      localStorage.setItem("currentDoctor", data.phone);
+      // Store current doctor's phone number for immediate login
+      localStorage.setItem("currentDoctor", data.phone_number);
+      console.log("Doctor registered successfully:", newDoctor);
       
       toast.success("Registration successful! Redirecting to dashboard...");
       
@@ -278,7 +221,7 @@ const DoctorRegistration = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <FormField
                     control={form.control}
-                    name="fullName"
+                    name="name"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Full Name</FormLabel>
@@ -306,13 +249,16 @@ const DoctorRegistration = () => {
                   
                   <FormField
                     control={form.control}
-                    name="phone"
+                    name="phone_number"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Phone Number</FormLabel>
                         <FormControl>
-                          <Input placeholder="+1 234 567 8900" {...field} />
+                          <Input placeholder="+919876543210" {...field} />
                         </FormControl>
+                        <FormDescription>
+                          This will be used as your login identifier
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -320,20 +266,23 @@ const DoctorRegistration = () => {
                   
                   <FormField
                     control={form.control}
-                    name="specialization"
+                    name="category_id"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Specialization</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select 
+                          onValueChange={(value) => field.onChange(parseInt(value))} 
+                          defaultValue={field.value?.toString()}
+                        >
                           <FormControl>
                             <SelectTrigger>
                               <SelectValue placeholder="Select your specialization" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {specializations.map((specialization) => (
-                              <SelectItem key={specialization} value={specialization}>
-                                {specialization}
+                            {doctorCategories.map((category) => (
+                              <SelectItem key={category.id} value={category.id.toString()}>
+                                {category.label}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -345,7 +294,7 @@ const DoctorRegistration = () => {
                   
                   <FormField
                     control={form.control}
-                    name="experience"
+                    name="experience_years"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Years of Experience</FormLabel>
@@ -390,9 +339,9 @@ const DoctorRegistration = () => {
                   </div>
                   
                   <div className="flex-1">
-                    <Label htmlFor="profilePhoto" className="mb-2 block">Upload your professional photo</Label>
+                    <Label htmlFor="photo_url" className="mb-2 block">Upload your professional photo</Label>
                     <Input 
-                      id="profilePhoto" 
+                      id="photo_url" 
                       type="file" 
                       accept="image/*"
                       onChange={handlePhotoChange}
@@ -452,113 +401,64 @@ const DoctorRegistration = () => {
                 </div>
               </div>
               
-              {/* Expertise Areas */}
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h2 className="text-xl font-semibold mb-4">Areas of Expertise</h2>
-                <p className="text-sm text-gray-600 mb-4">
-                  Select all disease categories you specialize in. This helps us match you with patients who have symptoms related to these conditions.
-                </p>
-                
-                <FormField
-                  control={form.control}
-                  name="expertiseAreas"
-                  render={() => (
-                    <FormItem>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {diseaseCategories.map((category) => (
-                          <FormField
-                            key={category.id}
-                            control={form.control}
-                            name="expertiseAreas"
-                            render={({ field }) => {
-                              return (
-                                <FormItem
-                                  key={category.id}
-                                  className="flex flex-row items-start space-x-3 space-y-0"
-                                >
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(category.id)}
-                                      onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...field.value, category.id])
-                                          : field.onChange(
-                                              field.value?.filter(
-                                                (value) => value !== category.id
-                                              )
-                                            )
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <div className="space-y-1 leading-none">
-                                    <FormLabel className="font-normal">
-                                      {category.label}
-                                    </FormLabel>
-                                    <FormDescription>
-                                      {category.symptoms.join(", ")}
-                                    </FormDescription>
-                                  </div>
-                                </FormItem>
-                              )
-                            }}
-                          />
-                        ))}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
               {/* Consultation Types */}
               <div className="bg-gray-50 p-6 rounded-lg">
-                <h2 className="text-xl font-semibold mb-4">Consultation Types</h2>
+                <h2 className="text-xl font-semibold mb-4">Consultation Types & Pricing</h2>
                 <p className="text-sm text-gray-600 mb-4">
-                  Select all the consultation types you are willing to provide.
+                  Select the consultation types you offer and set their prices.
                 </p>
                 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {consultationTypes.map((type, index) => (
+                    <div key={type.id} className="bg-white rounded-lg border border-gray-200 p-4">
+                      <div className="flex items-start mb-3">
+                        <Checkbox
+                          id={`type-${type.id}`}
+                          className="mt-1"
+                          checked={form.watch(`consultation_types.${index}.selected`)}
+                          onCheckedChange={(checked) => {
+                            form.setValue(`consultation_types.${index}.selected`, checked === true);
+                          }}
+                        />
+                        <div className="ml-3">
+                          <Label htmlFor={`type-${type.id}`} className="font-medium text-base">
+                            {type.label}
+                          </Label>
+                          <input
+                            type="hidden"
+                            {...form.register(`consultation_types.${index}.type`)}
+                            value={type.value}
+                          />
+                        </div>
+                      </div>
+                      
+                      {form.watch(`consultation_types.${index}.selected`) && (
+                        <div className="mt-2 pl-7">
+                          <Label htmlFor={`price-${type.id}`} className="block text-sm mb-1">
+                            Consultation Fee ($)
+                          </Label>
+                          <div className="relative rounded-md shadow-sm">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <span className="text-gray-500 sm:text-sm">$</span>
+                            </div>
+                            <Input
+                              id={`price-${type.id}`}
+                              type="number"
+                              placeholder="50"
+                              className="pl-8"
+                              {...form.register(`consultation_types.${index}.price`)}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
                 <FormField
                   control={form.control}
-                  name="consultationTypes"
+                  name="consultation_types"
                   render={() => (
                     <FormItem>
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                        {consultationTypes.map((type) => (
-                          <FormField
-                            key={type.id}
-                            control={form.control}
-                            name="consultationTypes"
-                            render={({ field }) => {
-                              return (
-                                <FormItem
-                                  key={type.id}
-                                  className="flex flex-row items-start space-x-3 space-y-0"
-                                >
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={field.value?.includes(type.id)}
-                                      onCheckedChange={(checked) => {
-                                        return checked
-                                          ? field.onChange([...field.value, type.id])
-                                          : field.onChange(
-                                              field.value?.filter(
-                                                (value) => value !== type.id
-                                              )
-                                            )
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <div className="space-y-1 leading-none">
-                                    <FormLabel className="font-normal">
-                                      {type.label}
-                                    </FormLabel>
-                                  </div>
-                                </FormItem>
-                              )
-                            }}
-                          />
-                        ))}
-                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -570,7 +470,7 @@ const DoctorRegistration = () => {
                 <h2 className="text-xl font-semibold mb-4">Professional Bio</h2>
                 <FormField
                   control={form.control}
-                  name="bio"
+                  name="about"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Brief Description of Your Practice</FormLabel>
