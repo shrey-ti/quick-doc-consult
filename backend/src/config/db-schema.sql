@@ -20,11 +20,9 @@ CREATE TABLE doctors (
   category_id INTEGER REFERENCES doctor_categories(id),
   photo_url TEXT,
   experience_years INTEGER NOT NULL DEFAULT 0,
-  rating DECIMAL(2,1) NOT NULL DEFAULT 0.0,
   consultation_count INTEGER NOT NULL DEFAULT 0,
-  price DECIMAL(10,2) NOT NULL,
   about TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 );
 
 -- Consultation types as enum
