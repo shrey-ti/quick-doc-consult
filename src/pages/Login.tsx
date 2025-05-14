@@ -101,7 +101,7 @@ const Login = () => {
         
         // Delay navigation slightly to show the success message
         setTimeout(() => {
-          navigate("/");
+          navigate("/doctor/dashboard");
         }, 1500);
       } else {
         // Doctor doesn't exist, show error message
@@ -191,7 +191,7 @@ const Login = () => {
                   <p className="text-sm text-gray-600">Phone: {isDoctorLoggedIn}</p>
                 </div>
                 <Button 
-                  onClick={() => navigate("/")}
+                  onClick={() => navigate("/doctor/dashboard")}
                   className="w-full"
                 >
                   Go to Home
