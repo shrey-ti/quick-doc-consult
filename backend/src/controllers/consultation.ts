@@ -117,7 +117,7 @@ export const createConsultation = async (
     const appointmentData: AppointmentRequest = req.body;
     
     // First ensure patient exists
-    let patientMobile = appointmentData.patient?.phone_number;
+    const patientMobile = appointmentData.patient?.phone_number;
     
     if (!patientMobile) {
       throw new AppError('Patient phone number is required', 400);

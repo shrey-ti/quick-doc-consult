@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import consultationRoutes from './consultation';
 import userRoutes from './user';
+import doctorRoutes from './doctor';
 
 const router = Router();
 
@@ -15,10 +16,12 @@ router.use('/users', userRoutes);
 // Consultation routes
 router.use('/consultations', consultationRoutes);
 
+// Doctor routes
+router.use('/doctors', doctorRoutes);
+
 // TODO: Add more route modules here
 // Example:
 // router.use('/auth', authRoutes);
-// router.use('/doctors', doctorRoutes);
 // router.use('/appointments', appointmentRoutes);
 
 export default router; 
